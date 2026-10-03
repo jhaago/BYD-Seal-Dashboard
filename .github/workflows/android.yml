@@ -33,6 +33,7 @@ jobs:
           gradle-version: '9.6.0'
           cache-read-only: true
       - name: Verify versions and generate official wrapper
+        id: wrapper
         shell: bash
         run: |
           set -euo pipefail
@@ -50,11 +51,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list --channel=0 | rg 'platforms;android-|build-tools;36\.'
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37' 'build-tools;36.0.0' 'platform-tools'
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list_installed
           test -f "$ANDROID_HOME/platforms/android-37/android.jar"
           test -x "$ANDROID_HOME/build-tools/36.0.0/aapt2"
       - name: Upload generated wrapper
+        if: ${{ always() && steps.wrapper.outcome == 'success' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: toolchain-bootstrap
