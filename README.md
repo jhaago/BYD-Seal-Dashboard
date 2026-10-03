@@ -4,7 +4,7 @@ Custom Android dashboard project for an Australian-market 2024 BYD Seal Dynamic 
 
 Initial development uses simulated telemetry. Real vehicle integration will be isolated and read-only.
 
-Status: design and implementation plan approved. Android toolchain verification is being established; no Android application or APK exists yet.
+Status: Android toolchain verified and a minimal Compose shell assembles with minSdk 24. Read-only telemetry model and tests are being implemented. No simulator/dashboard milestone or emulator/car verification yet.
 
 - [Design and architecture](docs/superpowers/specs/2026-10-03-mock-dashboard-design.md)
 - [First APK implementation plan](docs/superpowers/plans/2026-10-03-mock-dashboard-apk.md)
