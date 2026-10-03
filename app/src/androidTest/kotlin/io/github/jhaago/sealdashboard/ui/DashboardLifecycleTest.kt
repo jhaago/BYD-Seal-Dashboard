@@ -1,6 +1,7 @@
 package io.github.jhaago.sealdashboard.ui
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.SystemClock
 import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
@@ -14,6 +15,7 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.Before
+import io.github.jhaago.sealdashboard.preferences.*
 
 /** Exercise the launched Activity, application-owned provider and actual foreground lifecycle. */
 class DashboardLifecycleTest {
@@ -118,5 +120,50 @@ class DashboardLifecycleTest {
         compose.onNodeWithText("Net efficiency").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("nav-DEVELOPMENT").performClick()
         compose.onNodeWithTag("real-provider").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test fun physicalDisplayRotationKeepsTelemetryPreferencesAndDestination() {
+        command(MockCommand.SetSocPercent(63.0))
+        command(MockCommand.SetPaused(true))
+        DisplayPreferences(compose.activity).update(DisplaySettings(DriveLayout.FULL, mirrored = true))
+        compose.onNodeWithTag("nav-ENERGY").performClick()
+        val provider = container.vehicle
+        val snapshot = provider.state.value
+        val autoRotation = shell("settings get system accelerometer_rotation").trim()
+        val rotation = shell("settings get system user_rotation").trim()
+        try {
+            shell("settings put system accelerometer_rotation 0")
+            shell("settings put system user_rotation 1")
+            waitUntil { compose.activity.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT }
+            compose.onNodeWithTag("screen-ENERGY").assertExists()
+            compose.onNodeWithTag("nav-DRIVE").performClick()
+            compose.onNodeWithTag("speed-value", true).assertIsDisplayed()
+            compose.onNodeWithTag("soc-value", true).assertIsDisplayed()
+            captureDisplay("drive-rotated-portrait")
+            assertSame(provider, container.vehicle)
+            assertEquals(snapshot, provider.state.value)
+            assertEquals(DisplaySettings(DriveLayout.FULL, mirrored = true), DisplayPreferences(compose.activity).state.value)
+            shell("settings put system user_rotation 0")
+            waitUntil { compose.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
+            compose.onNodeWithTag("screen-DRIVE").assertExists()
+            captureDisplay("drive-rotated-landscape")
+            assertSame(provider, container.vehicle)
+            assertEquals(snapshot, provider.state.value)
+        } finally {
+            shell("settings put system user_rotation $rotation")
+            shell("settings put system accelerometer_rotation $autoRotation")
+            DisplayPreferences(compose.activity).update(DisplaySettings())
+        }
+    }
+
+    private fun shell(command: String): String {
+        val descriptor = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+        return ParcelFileDescriptor.AutoCloseInputStream(descriptor).bufferedReader().use { it.readText() }
+    }
+
+    private fun captureDisplay(name: String) {
+        compose.waitForIdle()
+        val path = "/sdcard/Pictures/SealDashboardEvaluation/$name.png"
+        assertEquals("SAVED", shell("mkdir -p /sdcard/Pictures/SealDashboardEvaluation && screencap -p $path && test -s $path && echo SAVED").trim())
     }
 }
