@@ -214,7 +214,7 @@ class SimulationEngine(config: SimulationConfig, private val clock: MonotonicClo
                 signal(regenKw, SignalKey.REGEN_POWER), signal(driveMode, SignalKey.DRIVE_MODE),
             ),
             wheels = immutableMap(pressures.mapValues { (_, pressure) -> WheelState(
-                signal(pressure * (tyreC + 273.15) / 297.15, SignalKey.TYRE_PRESSURES), signal(tyreC, SignalKey.TYRE_TEMPERATURES),
+                signal(pressure * ((tyreC + 273.15) / 297.15), SignalKey.TYRE_PRESSURES), signal(tyreC, SignalKey.TYRE_TEMPERATURES),
             ) }),
             openings = OpeningsState(immutableMap(doors.mapValues { signal(it.value, SignalKey.DOORS) }), signal(bootOpen, SignalKey.BOOT)),
             climate = ClimateState(signal(climateEnabled, SignalKey.CLIMATE), signal(climateTargetC, SignalKey.CLIMATE), signal(fanLevel, SignalKey.CLIMATE)),
