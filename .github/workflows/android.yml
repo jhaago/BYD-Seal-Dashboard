@@ -99,3 +99,86 @@ jobs:
             vehicle-mock/build/test-results/
           if-no-files-found: warn
           retention-days: 14
+
+  emulator:
+    name: Runtime API ${{ matrix.api }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - api: 29
+            image: 'system-images;android-29;google_apis;x86_64'
+          - api: 37
+            image: 'system-images;android-37.0;google_apis;x86_64'
+    env:
+      ANDROID_USER_HOME: ${{ runner.temp }}/seal-android
+      ANDROID_AVD_HOME: ${{ runner.temp }}/seal-avd
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947
+        with:
+          cache-read-only: false
+      - name: Install and boot an isolated emulator
+        id: boot
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$ANDROID_USER_HOME" "$ANDROID_AVD_HOME" evidence
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list --channel=0 | grep -E 'system-images;android-(29|37)' > evidence/available-images.txt
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37.0' 'build-tools;36.0.0' 'emulator' '${{ matrix.image }}'
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+          "$ANDROID_HOME/emulator/emulator" -accel-check
+          printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n seal-dashboard-test -k '${{ matrix.image }}' --device pixel_2
+          "$ANDROID_HOME/emulator/emulator" -avd seal-dashboard-test -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 > evidence/emulator.log 2>&1 &
+          timeout 240 adb wait-for-device
+          timeout 240 bash -c 'until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = 1 ]; do sleep 2; done'
+          adb shell input keyevent 82
+          adb shell wm size 1920x1080
+          adb shell wm density 160
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell getprop ro.build.version.sdk | tee evidence/runtime-api.txt
+          test "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" = '${{ matrix.api }}'
+      - name: Install and launch APK
+        if: ${{ steps.boot.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:assembleDebug
+          adb install -r app/build/outputs/apk/debug/app-debug.apk
+          adb shell am start -W -n io.github.jhaago.sealdashboard/.MainActivity
+          adb exec-out screencap -p > evidence/launch.png
+      - name: Run Compose runtime tests
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
+        run: ./gradlew --no-daemon :app:connectedDebugAndroidTest
+      - name: Retain runtime evidence
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          mkdir -p evidence
+          adb logcat -d > evidence/logcat.txt 2>&1 || true
+          adb emu kill || true
+      - name: Upload runtime evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runtime-api-${{ matrix.api }}
+          path: |
+            evidence/
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+          if-no-files-found: warn
+          retention-days: 14

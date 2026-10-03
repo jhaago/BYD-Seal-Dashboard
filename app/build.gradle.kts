@@ -12,6 +12,7 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0-mock"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
     compileOptions {
@@ -34,6 +35,11 @@ dependencies {
     implementation(libs.lifecycle.process)
     implementation(libs.coroutines.android)
     debugImplementation(libs.compose.tooling)
+    debugImplementation(libs.compose.test.manifest)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.test.junit4)
+    androidTestImplementation(libs.android.test.runner)
+    androidTestImplementation(libs.android.test.junit)
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)
 }
