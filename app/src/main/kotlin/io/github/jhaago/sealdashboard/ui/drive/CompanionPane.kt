@@ -52,5 +52,9 @@ import io.github.jhaago.sealdashboard.ui.theme.*
                 Text(if (display.layout == DriveLayout.COMPANION) "Full dashboard" else "Companion preview")
             }
         }
+        TextButton(onClick = { onDisplayChange(display.copy(navigationSource = if (display.ownNavigation) NavigationSource.FACTORY_PREVIEW else NavigationSource.OWN)) },
+            modifier = Modifier.heightIn(min = 56.dp).testTag("navigation-source-toggle")) {
+            Text(if (display.ownNavigation) "Android Auto preview" else "Own navigation", fontSize = 16.sp)
+        }
     }
 }
