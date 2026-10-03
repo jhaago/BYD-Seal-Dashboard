@@ -110,8 +110,10 @@ jobs:
         include:
           - api: 29
             image: 'system-images;android-29;google_apis;x86_64'
+            gpu: swiftshader_indirect
           - api: 37
             image: 'system-images;android-37.0;google_apis;x86_64'
+            gpu: swangle_indirect
     env:
       ANDROID_USER_HOME: /tmp/seal-dashboard-android
       ANDROID_AVD_HOME: /tmp/seal-dashboard-avd
@@ -143,7 +145,7 @@ jobs:
           sudo chmod a+rw /dev/kvm
           "$ANDROID_HOME/emulator/emulator" -accel-check
           printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n seal-dashboard-test -k '${{ matrix.image }}' --device pixel_2
-          "$ANDROID_HOME/emulator/emulator" -avd seal-dashboard-test -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 -partition-size 4096 > evidence/emulator.log 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd seal-dashboard-test -no-window -no-audio -no-boot-anim -no-snapshot -gpu "${{ matrix.gpu }}" -no-metrics -memory 2048 -partition-size 4096 > evidence/emulator.log 2>&1 &
           timeout 240 adb wait-for-device
           timeout 240 bash -c 'until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = 1 ]; do sleep 2; done'
           adb shell input keyevent 82
@@ -167,7 +169,32 @@ jobs:
           adb exec-out screencap -p > evidence/launch.png
       - name: Run Compose runtime tests
         if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
-        run: ./gradlew --no-daemon :app:connectedDebugAndroidTest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test_status=0
+          ./gradlew --no-daemon :app:connectedDebugAndroidTest || test_status=$?
+          report_status=0
+          python - <<'PY' || report_status=$?
+          import glob, sys, xml.etree.ElementTree as ET
+          tests = failures = skipped = 0
+          paths = glob.glob("app/build/outputs/androidTest-results/connected/debug/TEST-*.xml")
+          for path in paths:
+              root = ET.parse(path).getroot()
+              tests += int(root.get("tests", 0))
+              failures += int(root.get("failures", 0)) + int(root.get("errors", 0))
+              skipped += int(root.get("skipped", 0))
+              for case in root.iter("testcase"):
+                  issues = list(case.iter("failure")) + list(case.iter("error"))
+                  print(case.get("classname"), case.get("name"), "FAILED" if issues else "PASSED")
+                  for issue in issues:
+                      print("".join(issue.itertext())[:1800])
+          print(f"Runtime evidence: {tests} tests, {failures} failures/errors, {skipped} skipped")
+          if tests < 9 or failures or skipped:
+              sys.exit("Incomplete or failed runtime evidence; Gradle success alone is insufficient")
+          PY
+          test "$test_status" -eq 0
+          test "$report_status" -eq 0
       - name: Retain runtime evidence
         if: ${{ always() }}
         shell: bash
