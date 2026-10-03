@@ -4,6 +4,7 @@ import android.os.SystemClock
 import io.github.jhaago.sealdashboard.core.*
 import io.github.jhaago.sealdashboard.mock.*
 import io.github.jhaago.sealdashboard.session.SimulationSession
+import io.github.jhaago.sealdashboard.demo.*
 import kotlinx.coroutines.*
 
 /** Process-owned composition root. Telemetry is deliberately not persisted. */
@@ -14,4 +15,7 @@ class AppContainer {
     val vehicle: VehicleDataProvider = mock
     val simulation: MockSimulationController = mock
     val session = SimulationSession(vehicle)
+    val navigation: NavigationProvider = DemoNavigationProvider()
+    val media: MediaProvider = DemoMediaProvider()
+    val projection: ProjectionProvider = DemoProjectionProvider()
 }

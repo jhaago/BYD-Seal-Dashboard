@@ -143,7 +143,7 @@ jobs:
           sudo chmod a+rw /dev/kvm
           "$ANDROID_HOME/emulator/emulator" -accel-check
           printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n seal-dashboard-test -k '${{ matrix.image }}' --device pixel_2
-          "$ANDROID_HOME/emulator/emulator" -avd seal-dashboard-test -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 > evidence/emulator.log 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd seal-dashboard-test -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 -partition-size 4096 > evidence/emulator.log 2>&1 &
           timeout 240 adb wait-for-device
           timeout 240 bash -c 'until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = 1 ]; do sleep 2; done'
           adb shell input keyevent 82
@@ -154,12 +154,14 @@ jobs:
           adb shell settings put global animator_duration_scale 0
           adb shell getprop ro.build.version.sdk | tee evidence/runtime-api.txt
           test "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" = '${{ matrix.api }}'
+          adb shell df -h /data | tee evidence/guest-storage.txt
       - name: Install and launch APK
         if: ${{ steps.boot.outcome == 'success' }}
         shell: bash
         run: |
           set -euo pipefail
           ./gradlew --no-daemon :app:assembleDebug
+          adb shell df -h /data | tee evidence/pre-install-storage.txt
           adb install -r app/build/outputs/apk/debug/app-debug.apk
           adb shell am start -W -n io.github.jhaago.sealdashboard/.MainActivity
           adb exec-out screencap -p > evidence/launch.png
