@@ -1,0 +1,66 @@
+name: Android verification
+
+on:
+  push:
+    branches: [feature/mock-dashboard-foundation]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  toolchain:
+    name: Verify JDK, Gradle and Android SDK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out feature branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
+        with:
+          gradle-version: '9.6.0'
+          cache-read-only: true
+      - name: Verify versions and generate official wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          java -version
+          gradle --version
+          mkdir -p "$RUNNER_TEMP/wrapper-bootstrap"
+          printf 'rootProject.name = "wrapper-bootstrap"\n' > "$RUNNER_TEMP/wrapper-bootstrap/settings.gradle.kts"
+          gradle --no-daemon --project-dir "$RUNNER_TEMP/wrapper-bootstrap" wrapper \
+            --gradle-version 9.6.0 --distribution-type bin \
+            --gradle-distribution-sha256-sum bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01
+          cd "$RUNNER_TEMP/wrapper-bootstrap"
+          printf '%s  %s\n' '497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7' 'gradle/wrapper/gradle-wrapper.jar' | sha256sum -c -
+          ./gradlew --version
+      - name: Install compile SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37' 'build-tools;36.0.0' 'platform-tools'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list_installed
+          test -f "$ANDROID_HOME/platforms/android-37/android.jar"
+          test -x "$ANDROID_HOME/build-tools/36.0.0/aapt2"
+      - name: Upload generated wrapper
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: toolchain-bootstrap
+          path: |
+            ${{ runner.temp }}/wrapper-bootstrap/gradlew
+            ${{ runner.temp }}/wrapper-bootstrap/gradlew.bat
+            ${{ runner.temp }}/wrapper-bootstrap/gradle/wrapper/
+          if-no-files-found: error
+          retention-days: 7
