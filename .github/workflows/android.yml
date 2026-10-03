@@ -67,3 +67,27 @@ jobs:
             ${{ runner.temp }}/wrapper-bootstrap/gradle/wrapper/
           if-no-files-found: error
           retention-days: 7
+      - name: Build application and verify domain
+        if: ${{ hashFiles('settings.gradle.kts') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --version
+          ./gradlew --no-daemon :vehicle-core:test :vehicle-mock:test :app:assembleDebug :app:lintDebug
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions app/build/outputs/apk/debug/app-debug.apk
+          sha256sum app/build/outputs/apk/debug/app-debug.apk
+      - name: Retain build evidence
+        if: ${{ always() && hashFiles('settings.gradle.kts') != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-build-evidence
+          path: |
+            app/build/outputs/apk/debug/
+            app/build/reports/
+            vehicle-core/build/reports/
+            vehicle-core/build/test-results/
+            vehicle-mock/build/reports/
+            vehicle-mock/build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
