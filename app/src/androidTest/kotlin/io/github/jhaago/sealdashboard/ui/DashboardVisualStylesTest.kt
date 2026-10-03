@@ -1,0 +1,82 @@
+package io.github.jhaago.sealdashboard.ui
+
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.*
+import io.github.jhaago.sealdashboard.core.*
+import io.github.jhaago.sealdashboard.mock.*
+import io.github.jhaago.sealdashboard.preferences.*
+import io.github.jhaago.sealdashboard.ui.theme.*
+import org.junit.Assert.*
+import org.junit.Rule
+import org.junit.Test
+
+class DashboardVisualStylesTest {
+    @get:Rule val compose = createComposeRule()
+
+    @Test fun selectingStylesPreservesScreenTelemetryAndDisplayChoices() {
+        val host = DashboardTestHost()
+        host.command(MockCommand.SetSocPercent(63.0))
+        host.command(MockCommand.SetPaused(true))
+        host.display = DisplaySettings(DriveLayout.FULL, true)
+        host.ui = host.ui.copy(destination = DashboardDestination.ENERGY)
+        val snapshot = host.engine.state
+        compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
+        for (style in DashboardVisualStyle.entries) {
+            choose(style)
+            compose.onNodeWithTag("screen-ENERGY").assertExists()
+            compose.onNodeWithTag("source-label").assertTextEquals("SIMULATED")
+            compose.onNodeWithTag("provider-status").assertTextEquals("PAUSED")
+            compose.runOnIdle {
+                assertEquals(snapshot, host.engine.state)
+                assertEquals(63.0, host.engine.state.battery.stateOfChargePercent.value!!, 0.0)
+                assertEquals(DisplaySettings(DriveLayout.FULL, true, style), host.display)
+            }
+        }
+        compose.runOnIdle { host.ui = host.ui.copy(status = ProviderStatus.ERROR) }
+        choose(DashboardVisualStyle.SYSTEMS)
+        compose.onNodeWithTag("provider-status").assertTextEquals("ERROR")
+        compose.onNodeWithTag("source-label").assertTextEquals("SIMULATED")
+    }
+
+    @Test fun everyStyleKeepsPrimaryReadoutsAndNavigationReachableWithoutOverlap() {
+        val host = DashboardTestHost()
+        var dimensions by mutableStateOf(Triple(1280, 720, 1f))
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, dimensions.third)) {
+                host.Content(Modifier.requiredSize(dimensions.first.dp, dimensions.second.dp))
+            }
+        }
+        for (style in DashboardVisualStyle.entries) for ((w, h, scale) in listOf(Triple(1280,720,1f),Triple(400,720,1.3f),Triple(600,960,1.3f))) {
+            compose.runOnIdle { host.display = host.display.copy(visualStyle = style); dimensions = Triple(w,h,scale) }
+            compose.onNodeWithTag("style-menu").assertIsDisplayed()
+            val bounds = listOf("speed-value", "gear-value", "soc-value", "range-value", "power-value").map {
+                compose.onNodeWithTag(it, true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
+            }
+            for (a in bounds.indices) for (b in a+1 until bounds.size)
+                assertFalse("$style at $w x $h / $scale", bounds[a].overlaps(bounds[b]))
+            DashboardDestination.entries.forEach { compose.onNodeWithTag("nav-${it.name}").assertIsDisplayed() }
+        }
+    }
+
+    @Test fun systemsMimicDoesNotPresentUnknownConversionOrStaleSamplesAsActive() {
+        val host = DashboardTestHost()
+        host.display = host.display.copy(visualStyle = DashboardVisualStyle.SYSTEMS)
+        host.ui = host.ui.copy(destination = DashboardDestination.ENERGY)
+        compose.setContent { host.Content(Modifier.requiredSize(1280.dp,720.dp)) }
+        compose.onNodeWithTag("systems-pack-quality").performScrollTo().assertTextEquals("FRESH SAMPLE")
+        compose.onNodeWithText("Conversion state unavailable").assertExists()
+        compose.runOnIdle { host.now += 3000; host.refresh() }
+        compose.onNodeWithTag("systems-pack-quality").assertTextEquals("STALE SAMPLE")
+        compose.onNodeWithTag("systems-pack-value").assertTextEquals("— %")
+    }
+
+    private fun choose(style: DashboardVisualStyle) {
+        compose.onNodeWithTag("style-menu").performClick()
+        compose.onNodeWithTag("select-style-${style.name}").performClick()
+    }
+}

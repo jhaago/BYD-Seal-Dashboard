@@ -41,10 +41,10 @@ Package prefix `P` below means `io/github/jhaago/sealdashboard`.
 
 **Produces:** `enum class DashboardVisualStyle { MODERN, SYSTEMS, TRON }`; `fun parseVisualStyle(raw: String?): DashboardVisualStyle`; `data class DashboardPalette(val background: Color, val surface: Color, val elevated: Color, val text: Color, val muted: Color, val accent: Color, val warning: Color, val error: Color, val grid: Color)`; `@Composable fun DashboardTheme(style: DashboardVisualStyle, content: @Composable () -> Unit)`; `LocalDashboardPalette`; `DisplaySettings.visualStyle` default Modern.
 
-- [ ] Write `DisplayPreferencesTest` instrumentation tests: save Systems, reconstruct preferences, receive Systems with existing Full/mirrored values; invalid stored `style` falls back to Modern; changing style preserves layout/mirror.
-- [ ] Write `DashboardThemeTest` with two independent compositions/styles: Modern and Systems have different palettes, while switching one does not change the other's colours. Run `:app:connectedDebugAndroidTest`; expected meaningful missing-style/selection failure before implementation.
-- [ ] Implement the types, immutable palette tokens and persisted style with parsing fallback. Keep existing palette as Modern; Systems squared burgundy surfaces, pale-blue outlines and green valid indicators and Tron cyan route accents. Do not introduce global mutable selected-theme state.
-- [ ] Run `:app:testDebugUnitTest :app:connectedDebugAndroidTest :app:lintDebug`; expect all tests/lint pass. Commit `feat: add persistent dashboard visual styles`.
+- [x] Write `DisplayPreferencesTest` instrumentation tests: save Systems, reconstruct preferences, receive Systems with existing Full/mirrored values; invalid stored `style` falls back to Modern; changing style preserves layout/mirror.
+- [x] Write `DashboardThemeTest` with two independent compositions/styles: Modern and Systems have different palettes, while switching one does not change the other's colours. Run `:app:connectedDebugAndroidTest`; expected meaningful missing-style/selection failure before implementation.
+- [x] Implement the types, immutable palette tokens and persisted style with parsing fallback. Keep existing palette as Modern; Systems squared burgundy surfaces, pale-blue outlines and green valid indicators and Tron cyan route accents. Do not introduce global mutable selected-theme state.
+- [x] Run `:app:testDebugUnitTest :app:connectedDebugAndroidTest :app:lintDebug`; expect all tests/lint pass. Commit `feat: add persistent dashboard visual styles`.
 
 ### Task 2: Theme selection and all-screen presentation
 
