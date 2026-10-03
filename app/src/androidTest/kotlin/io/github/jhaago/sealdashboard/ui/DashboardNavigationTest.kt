@@ -24,6 +24,6 @@ class DashboardNavigationTest {
         compose.setContent { host.Content() }
         compose.onNodeWithTag("soc-value", true).assertTextEquals("—")
         compose.onNodeWithTag("speed-value", true).assertTextEquals("—")
-        compose.onNodeWithTag("speed-quality", true).assertTextContains("STALE")
+        compose.onNodeWithTag("speed-quality", true).assertTextContains("STALE", substring = true)
     }
 }

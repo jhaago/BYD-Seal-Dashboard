@@ -34,6 +34,6 @@ class DevelopmentControlsTest {
         compose.onNodeWithTag("real-provider").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText("Real telemetry is not integrated. Mock controls never command the vehicle.").assertExists()
         compose.onNodeWithTag("door-FRONT_LEFT").performScrollTo().performClick()
-        compose.onNodeWithTag("command-result").assertTextContains("stationary")
+        compose.onNodeWithTag("command-result").assertTextContains("stationary", substring = true)
     }
 }

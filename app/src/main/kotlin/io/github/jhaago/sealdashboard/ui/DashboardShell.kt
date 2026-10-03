@@ -48,7 +48,7 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
             rejection = (result as? CommandResult.Rejected)?.reason
             result
         }
-        Column(modifier.fillMaxSize().background(DashboardColors.Background).safeDrawingPadding()) {
+        Column(modifier.fillMaxSize().testTag("dashboard-root").background(DashboardColors.Background).safeDrawingPadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column {

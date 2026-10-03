@@ -1,0 +1,70 @@
+package io.github.jhaago.sealdashboard.ui
+
+import android.graphics.Bitmap
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.*
+import androidx.test.platform.app.InstrumentationRegistry
+import io.github.jhaago.sealdashboard.core.*
+import io.github.jhaago.sealdashboard.mock.*
+import io.github.jhaago.sealdashboard.preferences.*
+import org.junit.Assert.*
+import org.junit.Rule
+import org.junit.Test
+import java.io.File
+
+/** Deterministic screenshot fixtures; they complement, not replace, APK launch evidence. */
+class DashboardScreenshotsTest {
+    @get:Rule val compose = createComposeRule()
+    @Test fun captureBothDriveModesAllScreensAndLargeTextPortrait() {
+        val host = DashboardTestHost()
+        repeat(400) { host.step(.1) }
+        var size by mutableStateOf(Triple(1280, 720, 1f))
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, size.third)) {
+                host.Content(Modifier.requiredSize(size.first.dp, size.second.dp))
+            }
+        }
+        capture("drive-companion")
+        compose.runOnIdle { host.display = host.display.copy(layout = DriveLayout.FULL) }
+        capture("drive-full")
+        compose.runOnIdle {
+            host.command(MockCommand.SetGear(Gear.PARK))
+            host.command(MockCommand.SetDoor(Door.FRONT_LEFT, true))
+            host.command(MockCommand.SetTyrePressureKpa(Wheel.REAR_RIGHT, 235.0))
+            host.ui = host.ui.copy(destination = DashboardDestination.VEHICLE)
+        }
+        capture("vehicle")
+        compose.runOnIdle {
+            host.command(MockCommand.SetDoor(Door.FRONT_LEFT, false))
+            host.command(MockCommand.SetGear(Gear.DRIVE))
+            host.command(MockCommand.SetTargetSpeedKmh(60.0))
+            repeat(100) { host.step(.1) }
+            host.command(MockCommand.SetTargetSpeedKmh(0.0))
+            repeat(30) { host.step(.1) }
+            host.ui = host.ui.copy(destination = DashboardDestination.ENERGY)
+        }
+        capture("energy")
+        compose.runOnIdle { host.ui = host.ui.copy(destination = DashboardDestination.DEVELOPMENT) }
+        capture("development")
+        compose.runOnIdle {
+            host.ui = host.ui.copy(destination = DashboardDestination.DRIVE)
+            size = Triple(600, 960, 1.3f)
+        }
+        capture("drive-portrait-large-text")
+        compose.runOnIdle { size = Triple(400, 720, 1.3f) }
+        capture("drive-compact-large-text")
+    }
+    private fun capture(name: String) {
+        compose.waitForIdle()
+        val bitmap = compose.onNodeWithTag("dashboard-root").captureToImage().asAndroidBitmap()
+        val directory = File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "screenshots")
+        assertTrue(directory.isDirectory || directory.mkdirs())
+        File(directory, "$name.png").outputStream().use { assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
+    }
+}
