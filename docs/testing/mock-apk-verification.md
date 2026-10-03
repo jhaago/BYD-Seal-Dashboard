@@ -11,7 +11,11 @@ Status: in progress; not a completed or car-tested milestone.
 - API 37 has not completed installation/runtime validation. Emulator 37.2.12 SurfaceFlinger repeatedly aborted in RegionSampling with `hasReadColorBufferDma`; Android package/activity services became unavailable before app testing. A renderer change alone did not fix it.
 - Runtime CI now requires at least 9 executed tests, zero failures/errors and zero skips. A Gradle SUCCESS with no executed tests is explicitly rejected.
 
-## Current fixes awaiting verification
+## Latest verified checkpoint
+
+At `1c2fc49` in [run 37125265354](https://github.com/jhaago/BYD-Seal-Dashboard/actions/runs/37125265354), all 50 unit tests, Android lint and APK assembly passed. API 29 installed/launched the corrected APK and passed all 9 runtime tests, with zero failures or skips. Both contrast regressions passed RED→GREEN. Seven screenshot fixtures were captured and pulled successfully (472,674 bytes total); their corrected visual inspection is still pending workspace recovery. API 37 failed during emulator window-service setup before app tests; it is not a passing runtime gate.
+
+## Fixes and unresolved environment
 
 Provide explicit warm-white inherited content color and light system-bar icons. Keep diagnostic screenshots through test cleanup using the test app's normal MediaStore insertion API, with no production storage permission. API 37 additionally tests disabling emulator GLDirectMem: host render-control source ties advertised read-color-buffer DMA to direct-memory support. This is an emulator graphics compatibility hypothesis, not a vehicle/app permission workaround.
 
