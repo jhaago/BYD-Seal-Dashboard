@@ -1,6 +1,9 @@
 package io.github.jhaago.sealdashboard.ui
 
 import android.graphics.Bitmap
+import android.content.ContentValues
+import android.provider.MediaStore
+import androidx.test.filters.SdkSuppress
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,6 +22,7 @@ import org.junit.Test
 import java.io.File
 
 /** Deterministic screenshot fixtures; they complement, not replace, APK launch evidence. */
+@SdkSuppress(minSdkVersion = 29)
 class DashboardScreenshotsTest {
     @get:Rule val compose = createComposeRule()
     @Test fun captureBothDriveModesAllScreensAndLargeTextPortrait() {
@@ -66,5 +70,14 @@ class DashboardScreenshotsTest {
         val directory = File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "screenshots")
         assertTrue(directory.isDirectory || directory.mkdirs())
         File(directory, "$name.png").outputStream().use { assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
+        // Public test media survives AGP's uninstall cleanup; no storage permission is requested.
+        val resolver = InstrumentationRegistry.getInstrumentation().targetContext.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/SealDashboardEvaluation")
+        }
+        val uri = requireNotNull(resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values))
+        requireNotNull(resolver.openOutputStream(uri)).use { assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it)) }
     }
 }
