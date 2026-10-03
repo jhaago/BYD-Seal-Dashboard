@@ -1,6 +1,9 @@
 package io.github.jhaago.sealdashboard.ui
 
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -24,6 +27,22 @@ class NavigationPreviewTest {
         }
         compose.onNodeWithText("Route unavailable").assertIsDisplayed()
         compose.onNodeWithText("Follow the coastal route").assertDoesNotExist()
+    }
+
+    @Test fun compactLargeTextKeepsUsableMapAndCompleteFooter() {
+        val host = DashboardTestHost()
+        host.display = DisplaySettings(DriveLayout.FULL, visualStyle = DashboardVisualStyle.SYSTEMS)
+        compose.setContent {
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1.3f)) {
+                host.Content(Modifier.requiredSize(400.dp,720.dp))
+            }
+        }
+        val map = compose.onNodeWithTag("street-map").performScrollTo().fetchSemanticsNode().boundsInRoot
+        val minimumHeight = with(compose.density) { 200.dp.toPx() }
+        assertTrue("Map must retain 200dp usable height; got $map", map.height >= minimumHeight)
+        compose.onNodeWithText("Fictional local map · no live guidance").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("speed-value", true).performScrollTo().assertIsDisplayed()
+        DashboardDestination.entries.forEach { compose.onNodeWithTag("nav-${it.name}").assertIsDisplayed() }
     }
 
     @Test fun switchingPreviewSourceShowsStreetMapTurnAndSampleMarkersWithoutARealSession() {

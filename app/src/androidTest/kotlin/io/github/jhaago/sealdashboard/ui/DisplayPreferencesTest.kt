@@ -25,6 +25,15 @@ class DisplayPreferencesTest {
         assertEquals(DashboardVisualStyle.MODERN, DisplayPreferences(context).state.value.visualStyle)
     }
 
+    @Test fun wrongTypeStoredStyleFallsBackWithoutLosingOtherChoices() {
+        DisplayPreferences(context).update(DisplaySettings(DriveLayout.FULL, true))
+        context.getSharedPreferences("display", Context.MODE_PRIVATE).edit().putInt("style", 1).commit()
+        val restored = DisplayPreferences(context).state.value
+        assertEquals(DashboardVisualStyle.MODERN, restored.visualStyle)
+        assertEquals(DriveLayout.FULL, restored.layout)
+        assertTrue(restored.mirrored)
+    }
+
     @Test fun switchingStylePreservesExistingDisplayChoices() {
         val preferences = DisplayPreferences(context)
         preferences.update(DisplaySettings(DriveLayout.FULL, true, DashboardVisualStyle.SYSTEMS))
