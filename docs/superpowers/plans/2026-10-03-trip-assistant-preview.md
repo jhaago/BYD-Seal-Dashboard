@@ -8,7 +8,7 @@
 
 **Tech Stack:** Existing Kotlin/Compose/coroutines; existing dependency pins; no new network or audio dependency.
 
-**Spec:** `docs/superpowers/specs/2026-10-03-assistant-and-visual-themes-design.md`, proposed extension; execution awaits review.
+**Spec:** `docs/superpowers/specs/2026-10-03-assistant-and-visual-themes-design.md`, approved offline extension; native execution authorized.
 
 ## Global Constraints
 
@@ -41,9 +41,9 @@ Package prefix `P` means `io/github/jhaago/sealdashboard`.
 
 **Produces:** `AssistantRequest(text: String, routeId: String, optionIds: List<String>)`; `AssistantReply` sealed results Message/ChargerOptions/Clarification/RouteProposal; `suspend fun AssistantService.respond(request: AssistantRequest): AssistantReply`; `suspend fun ChargerSearchProvider.search(routeId: String): List<ChargerOption>`; `ChargerOption(id: String, name: String, connector: String, advertisedKw: Double?, detourMinutes: Int?, availability: ChargerAvailability, sourceLabel: String)` with `enum class ChargerAvailability { UNKNOWN, AVAILABLE, UNAVAILABLE }`; `RouteProposal(id: String, baseRouteId: String, chargerId: String)`; `PreviewRouteActions.apply(proposal: RouteProposal): ProposalResult` with Applied/Stale/AlreadyApplied/UnknownCharger.
 
-- [ ] Write `PreviewRouteActionsTest`: base route `demo-1`, station `demo-fast-2`; Apply adds one waypoint and changes route ID; second Apply adds none; old route ID rejected; unknown station rejected. Literal expected waypoint counts are 1 after first Apply and 1 after repeated Apply. Add metadata tests for missing advertised kW/detour => unknown, non-finite power rejected and demo availability unknown.
-- [ ] Run `:app:testDebugUnitTest`; expected failures from absent contracts/adapter. Implement fixture models and deterministic route actions, with immutable emitted state and consumed-proposal IDs. Keep factory projection provider unchanged.
-- [ ] Run full module unit tests plus `:app:lintDebug :app:assembleDebug`; expect pass. Commit `feat: define scripted trip and charger proposal adapters`.
+- [x] Write `PreviewRouteActionsTest`: base route `demo-1`, station `demo-fast-2`; Apply adds one waypoint and changes route ID; second Apply adds none; old route ID rejected; unknown station rejected. Literal expected waypoint counts are 1 after first Apply and 1 after repeated Apply. Add metadata tests for missing advertised kW/detour => unknown, non-finite power rejected and demo availability unknown.
+- [x] Run `:app:testDebugUnitTest`; expected failures from absent contracts/adapter. Implement fixture models and deterministic route actions, with immutable emitted state and consumed-proposal IDs. Keep factory projection provider unchanged.
+- [x] Run full module unit tests plus `:app:lintDebug :app:assembleDebug`; expect pass. Commit `feat: define scripted trip and charger proposal adapters`.
 
 ### Task 2: Contextual assistant controller
 
