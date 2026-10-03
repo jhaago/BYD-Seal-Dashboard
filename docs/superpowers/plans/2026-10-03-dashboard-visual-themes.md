@@ -50,9 +50,9 @@ Package prefix `P` below means `io/github/jhaago/sealdashboard`.
 
 **Consumes:** Task 1 theme/preference interfaces. **Produces:** `@Composable fun ThemeSelector(selected: DashboardVisualStyle, onSelect: (DashboardVisualStyle) -> Unit)`; theme-aware existing screens/components; changing style updates preferences without touching provider state or selected destination.
 
-- [ ] Add `DashboardVisualStylesTest`: select each style through UI, retain selected Energy screen, paused fixture SOC 63%, error/source labels and existing layout. At 1280×720, 400×720 and 600×960 dp/font 1.3 assert primary values and navigation visible/reachable and no readout overlap. Expected failure before selection/render support exists.
-- [ ] Replace `DashboardColors` consumers with local immutable tokens. Add reachable selector in Development and a compact theme action for parked preview; use Systems frames/energy-flow graphic driven only by existing typed signals. Preserve readout units, warning text/icons and touch dimensions.
-- [ ] Run full module tests, Android lint and runtime suite. Inspect screenshots for all four screens/all three styles, full/companion/portrait/large text; fix observed layout defects with regression tests. Commit `feat: apply visual styles across dashboard screens`.
+- [x] Add `DashboardVisualStylesTest`: select each style through UI, retain selected Energy screen, paused fixture SOC 63%, error/source labels and existing layout. At 1280×720, 400×720 and 600×960 dp/font 1.3 assert primary values and navigation visible/reachable and no readout overlap. Expected failure before selection/render support exists.
+- [x] Replace `DashboardColors` consumers with local immutable tokens. Add reachable selector in Development and a compact theme action for parked preview; use Systems frames/energy-flow graphic driven only by existing typed signals. Preserve readout units, warning text/icons and touch dimensions.
+- [x] Run full module tests, Android lint and runtime suite. Inspect screenshots for all four screens/all three styles, full/companion/portrait/large text; fix observed layout defects with regression tests. Commit `feat: apply visual styles across dashboard screens`.
 
 ### Task 3: Original street-map and Tron navigation preview
 
