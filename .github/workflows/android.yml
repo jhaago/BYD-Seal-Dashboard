@@ -113,8 +113,8 @@ jobs:
           - api: 37
             image: 'system-images;android-37.0;google_apis;x86_64'
     env:
-      ANDROID_USER_HOME: ${{ runner.temp }}/seal-android
-      ANDROID_AVD_HOME: ${{ runner.temp }}/seal-avd
+      ANDROID_USER_HOME: /tmp/seal-dashboard-android
+      ANDROID_AVD_HOME: /tmp/seal-dashboard-avd
     steps:
       - name: Check out feature branch
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
