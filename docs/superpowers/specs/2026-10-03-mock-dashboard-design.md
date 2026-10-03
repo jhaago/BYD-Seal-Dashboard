@@ -6,7 +6,7 @@ Status: proposed for Jordan's review. This is a design, not a completed app or a
 
 Build an original, premium Android centre-screen experience for Jordan's Australian 2024 BYD Seal Dynamic, single-motor RWD. The first major milestone is a genuinely installable APK with changing simulated telemetry, four navigable screens and no dependency on the car, accounts, internet or proprietary SDKs. Evaluate the actual interface before integrating BYD data.
 
-The app is initially a normal Android application launched from the existing home screen. Default-home registration, automatic startup, overlays and factory-screen replacement are deferred. This is a proposed operational choice for review, not a change to the long-term alternative-home goal.
+The app is initially a normal Android application launched from the existing home screen. Its primary eventual driving arrangement is a two-app landscape view: factory Android Auto in the left two-thirds and a compact dashboard in the right third, closest to the driver. Default-home registration and automatic startup remain deferred until the normal app has been tested. The mock build represents Android Auto with an explicitly labelled simulation because the real projection host exists only on compatible vehicle hardware.
 
 ## Approach and alternatives
 
@@ -18,17 +18,17 @@ Propose minSdk 24 (Android 7), subject to checking dependency manifests, and tes
 
 Use near-black background, graphite surfaces, warm white text and restrained cyan accents. Use amber/red with text and icons for simulated fault states. Typography and whitespace establish hierarchy; avoid circular gauges, neon borders and a grid of unrelated tiles. Main touch targets should be at least 56 dp. Labels should generally be 16–18 sp or larger; speed should dominate at roughly 88–112 sp on a wide display. These are starting tokens to validate with screenshots and font scaling.
 
-Landscape Home has a navigation/demo-route region on the left and driving information on the right, nearer the driver in an Australian RHD car. Use roughly 60/40 content proportions, adapting to available space. A slim top status line carries time, outside temperature and a persistent SIMULATED label. A compact lower strip carries climate status, demo media and four destinations: Drive, Vehicle, Energy and Development. Navigation positions remain consistent across screens.
+Landscape Drive has two responsive forms. Full-dashboard mode uses a navigation/demo-route region on the left and driving information on the right. Split-companion mode is the preferred eventual in-car arrangement: factory Android Auto occupies the left two-thirds while a purpose-built compact dashboard occupies the right third, nearer the driver in an Australian RHD car. A development preference can mirror the panes, but the first default is Android Auto left/dashboard right. A slim top status line carries time, outside temperature and a persistent SIMULATED label. Compact navigation provides Drive, Vehicle, Energy and Development without shrinking the companion's primary telemetry.
 
 Speed and gear stay immediately readable. SOC, range and drive mode sit below them. A restrained horizontal power/regen indicator replaces small gauges. Secondary trip detail is compact. Animations are short transitions and subtle numeric/bar changes; speed must not lag behind the incoming sample through long easing. No simulated lane keeping, obstacle detection or ADAS imagery.
 
-The navigation area is explicitly labelled a demo route, rendered with original geometry. It is not a real map or guidance feed. Media is clearly sample content. Both regions have integration boundaries so later providers can replace them without changing vehicle telemetry.
+The navigation area and Android Auto pane in the mock APK are explicitly labelled simulations rendered with original geometry. They are not Google artwork, a real map or a projection feed. Media is clearly sample content. Navigation, media and projection have integration boundaries so later providers can replace them without changing vehicle telemetry.
 
 ## Screens
 
 | Screen | First milestone content |
 |---|---|
-| Drive | Speed, gear, SOC, estimated range, drive mode, signed pack-power indicator, ambient temperature, climate summary, compact trip data and demo navigation/media |
+| Drive | Full-dashboard and 2/3 + 1/3 companion previews. Speed, gear, SOC, estimated range, drive mode, signed pack-power indicator, ambient temperature, climate summary, compact trip data and simulated Android Auto/navigation/media. |
 | Vehicle | Original top-down sedan representation, four tyre pressures in kPa, optional simulated temperatures, individual door/boot states, SOC/range and charging summary. Graphic renderer accepts typed state and can later be replaced by proper Seal artwork. |
 | Energy | Separate rear-motor output and pack-power readings; regen magnitude; HV voltage/current; 60-second signed pack-power history; trip distance, gross energy used, recovered energy and net efficiency; SOC history. No front motor display for the Dynamic. |
 | Development | Demo/manual/pause/reset; target speed and accel/brake controls; SOC; gear/mode; per-wheel pressures; four doors and boot; charging; mock climate controls; raw signal values, source/freshness and bounded diagnostics. Real provider option visibly unavailable. |
@@ -44,6 +44,8 @@ Start with three Gradle modules, avoiding a module per screen:
 - `:app`: Android application, composition root, ViewModels, Compose theme/components/screens, preferences and development controls. Depends on core/mock. Feature packages separate the four screens.
 
 Later `:vehicle-byd` depends on core and Android/vendor integration only. The composition root selects one provider. Screen ViewModels consume the provider contract, not its implementation. Use constructor injection with a small app container; a DI framework is unnecessary initially.
+
+A later `BydSplitScreenController` in the Android/BYD integration boundary owns detection and launch of the factory Android Auto package, firmware-native split requests, custom freeform/embedded fallback and restoration to a normal full-screen task. The UI requests a layout intent and observes status; it does not call hidden task/window APIs. Android Auto remains a separate factory task, not Compose content and not an `androidx.car.app` implementation. Failure returns the dashboard to full screen and explains that split mode is unavailable. No projection package names, activities or hidden methods are hard-coded until inspected on Jordan's car.
 
 `VehicleDataProvider` exposes immutable `StateFlow<VehicleState>`, provider connection status/capabilities and bounded diagnostic events. Lifecycle operations are idempotent. A single owner starts/stops the provider; each screen must not create another polling job. The Android layer collects state with lifecycle awareness. Rotating preserves simulator state in an application-owned session. Pause simulation when the application is backgrounded; resume without integrating a large hidden time jump. Process death starts a fresh mock session and restores display preferences only.
 
@@ -73,7 +75,7 @@ Charging requires zero speed and Park; engaging charging stops driving demand. E
 
 Milestone 1 requests no BYD permissions, writes no vehicle commands, uses no ADB daemon, platform key, CAN transport, firmware modification, overlays or cluster APIs. Climate changes affect mock state only. The app remains on the centre infotainment screen and has an obvious route back through Android system navigation. Factory camera/phone interruptions and recovery will require car testing later.
 
-Navigation and media have separate state/providers, initially demo implementations. Actual mapping, Android navigation intents, notification/media access and playback controls are later work. No account/key/network dependency is needed to run the first build. No analytics or outbound telemetry.
+Navigation, Android Auto presence and media have separate state/providers, initially demo implementations. The first APK includes a visual 2/3 + 1/3 preview and a device-safe full-dashboard mode; it does not pretend to host a real Android Auto session on an emulator or phone. Actual factory-host launching, multi-window control, navigation intents, notification/media access and playback controls follow car inspection. No account/key/network dependency is needed to run the first build. No analytics or outbound telemetry.
 
 ## First major milestone and acceptance
 
@@ -86,10 +88,10 @@ The milestone is complete only when:
 3. Android lint and module unit tests pass; inspect merged manifest for minimum SDK and unintended vehicle permissions.
 4. Install and launch on an Android 10/API 29 emulator and a current supported Android emulator; record runtime evidence rather than equating compilation with usability.
 5. All four destinations work and share one changing simulation. Manual controls affect the dashboard; acceleration and braking visibly change power/regen; charging raises SOC at a physically consistent simulation rate.
-6. Inspect landscape screenshots (including a large tablet layout), portrait rotation, system insets and enlarged text. Speed, SOC and navigation stay readable; no overlaps or lost simulation state.
+6. Inspect full-dashboard and Android Auto 2/3 + dashboard 1/3 landscape screenshots (including a large tablet layout), portrait rotation, system insets and enlarged text. The compact dashboard keeps speed, gear, SOC, range and power legible; no overlaps or lost simulation state.
 7. Exercise foreground/background, pause/reset, unavailable telemetry and integration errors; no frozen reading masquerades as fresh.
 8. Provide installation instructions and distinguish emulator-tested from car-tested. Hardware compatibility remains unverified until installed on Jordan's car.
 
 ## Decision for review
 
-Recommend the RHD-oriented split layout and a normal launchable app for milestone 1. This preserves the premium home-screen direction while making the first APK easy to evaluate on Jordan's phone/tablet. After this written design is reviewed, prepare the implementation plan and begin the runnable mock foundation. See [DiLink research](../../research/2026-10-03-dilink-feasibility.md) for evidence and remaining unknowns.
+Recommend the RHD-oriented split-companion layout, with Android Auto on the left two-thirds and the dashboard on the right third, plus a normal launchable full-dashboard mode for milestone 1. This preserves the premium home-screen direction while making the first APK easy to evaluate on Jordan's phone/tablet. After this written design is reviewed, prepare the implementation plan and begin the runnable mock foundation. See [DiLink research](../../research/2026-10-03-dilink-feasibility.md) for evidence and remaining unknowns.
