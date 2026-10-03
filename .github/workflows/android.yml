@@ -48,6 +48,7 @@ jobs:
           printf '%s  %s\n' '497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7' 'gradle/wrapper/gradle-wrapper.jar' | sha256sum -c -
           ./gradlew --version
       - name: Install compile SDK
+        id: sdk
         shell: bash
         run: |
           set -euo pipefail
@@ -67,13 +68,19 @@ jobs:
             ${{ runner.temp }}/wrapper-bootstrap/gradle/wrapper/
           if-no-files-found: error
           retention-days: 7
-      - name: Build application and verify domain
+      - name: Run module unit tests
         if: ${{ hashFiles('settings.gradle.kts') != '' }}
         shell: bash
         run: |
           set -euo pipefail
           ./gradlew --version
-          ./gradlew --no-daemon :vehicle-core:test :vehicle-mock:test :app:assembleDebug :app:lintDebug
+          ./gradlew --no-daemon :vehicle-core:test :vehicle-mock:test :app:testDebugUnitTest
+      - name: Build application and check Android compatibility
+        if: ${{ !cancelled() && steps.sdk.outcome == 'success' && hashFiles('settings.gradle.kts') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:assembleDebug :app:lintDebug
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/apk/debug/app-debug.apk
