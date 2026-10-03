@@ -7,7 +7,10 @@ data class RoutePoint(val x: Float, val y: Float) {
     init { require(x.isFinite() && y.isFinite() && x in 0f..1f && y in 0f..1f) }
 }
 data class MapChargerMarker(val id: String, val point: RoutePoint)
+data class RouteWaypoint(val chargerId: String, val name: String, val point: RoutePoint)
 data class NavigationState(
+    val routeId: String = "demo-1",
+    val waypoints: List<RouteWaypoint> = emptyList(),
     val sourceLabel: String = "SIMULATED ROUTE",
     val instruction: String = "Follow the coastal route",
     val distanceKm: Double = 8.4,
@@ -22,5 +25,7 @@ data class NavigationState(
 )
 interface NavigationProvider { val state: StateFlow<NavigationState> }
 class DemoNavigationProvider : NavigationProvider {
-    override val state = MutableStateFlow(NavigationState()).asStateFlow()
+    private val mutableState = MutableStateFlow(NavigationState())
+    override val state = mutableState.asStateFlow()
+    internal fun updatePreview(state: NavigationState) { mutableState.value = state }
 }
