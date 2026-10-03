@@ -202,7 +202,7 @@ jobs:
                   for issue in issues:
                       print("".join(issue.itertext())[:1800])
           print(f"Runtime evidence: {tests} tests, {failures} failures/errors, {skipped} skipped")
-          if tests < 24 or failures or skipped:
+          if tests < 26 or failures or skipped:
               sys.exit("Incomplete or failed runtime evidence; Gradle success alone is insufficient")
           PY
           test "$test_status" -eq 0

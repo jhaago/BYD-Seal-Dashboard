@@ -19,7 +19,7 @@ class DisplayPreferences(context: Context) {
     private val mutableState = MutableStateFlow(DisplaySettings(
         DriveLayout.entries.find { it.name == preferences.getString("layout", null) } ?: DriveLayout.COMPANION,
         preferences.getBoolean("mirrored", false),
-        parseVisualStyle(preferences.getString("style", null)),
+        parseVisualStyle(preferences.all["style"] as? String),
         NavigationSource.entries.find { it.name == preferences.getString("navigationSource", null) } ?: NavigationSource.FOLLOW_LAYOUT,
     ))
     val state = mutableState.asStateFlow()

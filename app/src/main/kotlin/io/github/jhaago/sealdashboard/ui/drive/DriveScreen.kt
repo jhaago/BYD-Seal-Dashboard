@@ -38,12 +38,14 @@ import io.github.jhaago.sealdashboard.ui.navigation.*
             }
         } else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(24.dp)) {
             CompanionPane(ui, display, onDisplayChange, true, Modifier.fillMaxWidth().testTag("telemetry-pane"))
-            ProjectionPane(demos, display, Modifier.fillMaxWidth().height(400.dp).testTag("projection-pane"))
+            ProjectionPane(demos, display, Modifier.fillMaxWidth().then(
+                if (display.ownNavigation) Modifier else Modifier.height(400.dp)
+            ).testTag("projection-pane"), compact = true)
         }
     }
 }
 
-@Composable private fun ProjectionPane(demos: DashboardDemoState, display: DisplaySettings, modifier: Modifier) {
-    if (display.ownNavigation) NavigationPreview(demos.navigation, display.visualStyle, modifier)
+@Composable private fun ProjectionPane(demos: DashboardDemoState, display: DisplaySettings, modifier: Modifier, compact: Boolean = false) {
+    if (display.ownNavigation) NavigationPreview(demos.navigation, display.visualStyle, modifier, compact)
     else FactoryProjectionPreview(demos.projection, demos.media, modifier)
 }

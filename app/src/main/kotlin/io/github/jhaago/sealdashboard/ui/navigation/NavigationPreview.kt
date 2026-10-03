@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.*
 import io.github.jhaago.sealdashboard.demo.*
 import io.github.jhaago.sealdashboard.ui.theme.*
 
-@Composable fun NavigationPreview(state: NavigationState, style: DashboardVisualStyle, modifier: Modifier = Modifier) {
+@Composable fun NavigationPreview(state: NavigationState, style: DashboardVisualStyle, modifier: Modifier = Modifier, compact: Boolean = false) {
     val colors=LocalDashboardPalette.current
     val valid=state.route.size >= 2
     Column(modifier.background(colors.surface,dashboardPanelShape()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
@@ -22,7 +22,9 @@ import io.github.jhaago.sealdashboard.ui.theme.*
         } else Text("No sample route geometry. No directions available.",fontSize=16.sp,color=colors.warning)
         // Style belongs to this composition; the renderer uses the same immutable tokens.
         DashboardTheme(style) {
-            TronMapCanvas(DemoStreetMap.Sample,state.route,Modifier.fillMaxWidth().weight(1f),state.chargerMarkers)
+            TronMapCanvas(DemoStreetMap.Sample,state.route,Modifier.fillMaxWidth().then(
+                if (compact) Modifier.height(240.dp) else Modifier.weight(1f)
+            ),state.chargerMarkers)
         }
         Text("Demo chargers · availability unknown",fontSize=16.sp,color=colors.muted)
         Text("Fictional local map · no live guidance",fontSize=16.sp,color=colors.muted)

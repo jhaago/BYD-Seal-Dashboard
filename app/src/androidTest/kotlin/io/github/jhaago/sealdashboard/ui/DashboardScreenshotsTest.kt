@@ -68,6 +68,8 @@ class DashboardScreenshotsTest {
             capture("$prefix-drive-portrait-large-text")
             compose.runOnIdle { size = Triple(400, 720, 1.3f) }
             capture("$prefix-drive-compact-large-text")
+            compose.onNodeWithTag("street-map").performScrollTo()
+            capture("$prefix-map-compact-large-text")
         }
     }
     private fun capture(name: String) {
