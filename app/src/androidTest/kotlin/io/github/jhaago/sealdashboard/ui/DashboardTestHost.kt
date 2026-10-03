@@ -31,7 +31,18 @@ class DashboardTestHost(service: AssistantService? = null) {
     @Composable fun Content(modifier: Modifier = Modifier) {
         DisposableEffect(this@DashboardTestHost) { onDispose { assistantScope.cancel() } }
         val nav by navigation.state.collectAsState()
+        val conversation by assistant.state.collectAsState()
         DashboardContent(ui, simulation, { ui = ui.copy(destination = it) }, ::command,
-            display, { display = it }, modifier = modifier, demos = DashboardDemoState(navigation = nav))
+            display, { display = it }, modifier = modifier, demos = DashboardDemoState(navigation = nav), assistantState = conversation,
+            onAssistantSubmit = assistant::submit, onAssistantCancel = assistant::cancel, onAssistantDismiss = assistant::dismissProposal,
+            onAssistantApply = { id ->
+                val pending = assistant.state.value.proposal
+                assistant.applyProposal(id)
+                val applied = assistant.state.value.appliedRouteId
+                if (pending?.id == id && applied != null && applied == navigation.state.value.routeId) {
+                    display = display.copy(navigationSource = NavigationSource.OWN)
+                    ui = ui.copy(destination = DashboardDestination.DRIVE)
+                }
+            })
     }
 }

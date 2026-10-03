@@ -2,7 +2,7 @@ package io.github.jhaago.sealdashboard.ui
 
 import io.github.jhaago.sealdashboard.core.*
 
-enum class DashboardDestination(val label: String) { DRIVE("Drive"), VEHICLE("Vehicle"), ENERGY("Energy"), DEVELOPMENT("Development") }
+enum class DashboardDestination(val label: String) { DRIVE("Drive"), VEHICLE("Vehicle"), ENERGY("Energy"), DEVELOPMENT("Development"), ASSISTANT("Assistant") }
 data class DashboardUiState(
     val vehicle: VehicleState,
     val status: ProviderStatus,

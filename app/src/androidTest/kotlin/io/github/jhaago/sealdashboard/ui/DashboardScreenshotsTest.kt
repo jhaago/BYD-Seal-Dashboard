@@ -70,6 +70,18 @@ class DashboardScreenshotsTest {
             capture("$prefix-drive-compact-large-text")
             compose.onNodeWithTag("street-map").performScrollTo()
             capture("$prefix-map-compact-large-text")
+            compose.runOnIdle {
+                host.ui = host.ui.copy(destination = DashboardDestination.ASSISTANT)
+                size = Triple(1280,720,1f)
+                host.assistant.submit("Find a charger on my way")
+            }
+            if (compose.onAllNodesWithTag("assistant-input").fetchSemanticsNodes().isEmpty())
+                compose.onNodeWithTag("assistant-driving-toggle").performScrollTo().performClick()
+            capture("$prefix-assistant-parked")
+            compose.onNodeWithTag("assistant-driving-toggle").performScrollTo().performClick()
+            capture("$prefix-assistant-driving")
+            compose.runOnIdle { size = Triple(400,720,1.3f) }
+            capture("$prefix-assistant-compact-driving")
         }
     }
     private fun capture(name: String) {

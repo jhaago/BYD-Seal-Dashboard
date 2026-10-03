@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import io.github.jhaago.sealdashboard.assistant.*
+import io.github.jhaago.sealdashboard.ui.assistant.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.semantics.contentDescription
@@ -32,17 +35,31 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
     val navigation by container.navigation.state.collectAsStateWithLifecycle()
     val media by container.media.state.collectAsStateWithLifecycle()
     val projection by container.projection.state.collectAsStateWithLifecycle()
+    val assistant by container.assistant.state.collectAsStateWithLifecycle()
     DashboardContent(ui, sim, viewModel::selectDestination, simulation::dispatch, display, preferences::update,
-        demos = DashboardDemoState(navigation, media, projection))
+        demos = DashboardDemoState(navigation, media, projection), assistantState = assistant,
+        onAssistantSubmit = container.assistant::submit, onAssistantCancel = container.assistant::cancel,
+        onAssistantDismiss = container.assistant::dismissProposal, onAssistantApply = { id ->
+            val pending = container.assistant.state.value.proposal
+            container.assistant.applyProposal(id)
+            val applied = container.assistant.state.value.appliedRouteId
+            if (pending?.id == id && applied != null && applied == container.navigation.state.value.routeId) {
+                preferences.update(preferences.state.value.copy(navigationSource = NavigationSource.OWN))
+                viewModel.selectDestination(DashboardDestination.DRIVE)
+            }
+        })
 }
 
 /** Ordinary screens see read-only state; Development alone gets mock commands. */
 @Composable fun DashboardContent(ui: DashboardUiState, simulation: SimulationStatus,
     onDestination: (DashboardDestination) -> Unit, onCommand: (MockCommand) -> CommandResult,
     display: DisplaySettings, onDisplayChange: (DisplaySettings) -> Unit,
-    modifier: Modifier = Modifier, demos: DashboardDemoState = DashboardDemoState()) {
+    modifier: Modifier = Modifier, demos: DashboardDemoState = DashboardDemoState(),
+    assistantState: AssistantState = AssistantState(), onAssistantSubmit: (String) -> Unit = {},
+    onAssistantCancel: () -> Unit = {}, onAssistantApply: (String) -> Unit = {}, onAssistantDismiss: (String) -> Unit = {}) {
     DashboardTheme(display.visualStyle) {
         val colors = LocalDashboardPalette.current
+        var drivingPreview by rememberSaveable { mutableStateOf(false) }
         var rejection by remember { mutableStateOf<String?>(null) }
         val mockCommand: (MockCommand) -> CommandResult = { command ->
             val result = onCommand(command)
@@ -64,12 +81,15 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
                 ThemeAction(display.visualStyle) { onDisplayChange(display.copy(visualStyle = it)) }
             }
             HorizontalDivider(color = colors.grid)
+            if (ui.destination == DashboardDestination.ASSISTANT) AssistantTelemetry(ui)
             Box(Modifier.weight(1f).fillMaxWidth().testTag("screen-${ui.destination.name}")) {
                 when (ui.destination) {
                     DashboardDestination.DRIVE -> DriveScreen(ui, display, onDisplayChange, demos)
                     DashboardDestination.VEHICLE -> VehicleScreen(ui)
                     DashboardDestination.ENERGY -> EnergyScreen(ui)
                     DashboardDestination.DEVELOPMENT -> DevelopmentScreen(ui, simulation, mockCommand, display, onDisplayChange)
+                    DashboardDestination.ASSISTANT -> AssistantScreen(assistantState, onAssistantSubmit, onAssistantCancel,
+                        onAssistantApply, onAssistantDismiss, drivingPreview, { drivingPreview = it })
                 }
             }
             rejection?.let { Text(it, Modifier.fillMaxWidth().background(colors.elevated).padding(12.dp).testTag("command-result"),
@@ -83,7 +103,13 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
                             .semantics { contentDescription = destination.label }
                             .background(if (selected) colors.elevated else colors.background, dashboardPanelShape()),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 12.dp)) {
-                        Text(if (destination == DashboardDestination.DEVELOPMENT) "Dev" else destination.label, fontSize = 16.sp,
+                        Text(when(destination) {
+                            DashboardDestination.DEVELOPMENT -> "Dev"
+                            DashboardDestination.VEHICLE -> "Car"
+                            DashboardDestination.ENERGY -> "Power"
+                            DashboardDestination.ASSISTANT -> "Chat"
+                            else -> destination.label
+                        }, fontSize = 16.sp,
                             color = if (selected) colors.accent else colors.muted)
                     }
                 }
