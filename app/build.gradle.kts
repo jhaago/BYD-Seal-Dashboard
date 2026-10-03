@@ -29,6 +29,12 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.compose.tooling.preview)
     implementation(libs.activity.compose)
+    implementation(libs.lifecycle.runtime.compose)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.lifecycle.process)
+    implementation(libs.coroutines.android)
     debugImplementation(libs.compose.tooling)
     testImplementation(libs.junit)
+    testImplementation(libs.coroutines.test)
 }
+tasks.withType<Test>().configureEach { testLogging { events("failed", "passed", "skipped") } }
