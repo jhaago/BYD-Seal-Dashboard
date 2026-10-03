@@ -78,7 +78,7 @@ class DashboardLifecycleTest {
         command(MockCommand.Manual)
         command(MockCommand.SetGear(Gear.DRIVE))
         command(MockCommand.SetTargetSpeedKmh(60.0))
-        waitUntil { (container.vehicle.state.value.motion.speedKmh.value ?: 0.0) > 3.0 }
+        waitUntil { (container.vehicle.state.value.motion.speedKmh.value ?: 0.0) >= 59.0 }
         val context = compose.activity.applicationContext
         context.startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -89,14 +89,17 @@ class DashboardLifecycleTest {
         assertEquals(stopped, container.vehicle.state.value)
         // Simulate the user launching the app from outside it. A background app
         // context cannot bring itself forward on Android 10 (and should not).
+        val resumeRequestedAt = SystemClock.elapsedRealtime()
         val launch = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(
             "am start -W -n io.github.jhaago.sealdashboard/.MainActivity")
         ParcelFileDescriptor.AutoCloseInputStream(launch).bufferedReader().use { it.readText() }
         waitUntil { container.vehicle.status.value == ProviderStatus.RUNNING }
         waitUntil { container.vehicle.state.value.sampledAtMillis > stopped.sampledAtMillis }
         val resumed = container.vehicle.state.value
-        // At 60 km/h a catch-up for the 1.5 s background interval exceeds 0.025 km.
-        assertTrue(resumed.trip.distanceKm.value!! - stopped.trip.distanceKm.value!! < 0.02)
+        // Bound by foreground wall time plus two ticker steps for scheduling.
+        // At >=59 km/h, integrating the hidden 1.5 s exceeds that margin.
+        val activeSeconds = (SystemClock.elapsedRealtime() - resumeRequestedAt + 200) / 1000.0
+        assertTrue(resumed.trip.distanceKm.value!! - stopped.trip.distanceKm.value!! <= activeSeconds * 60.0 / 3600.0)
         compose.onNodeWithTag("source-label").assertTextEquals("SIMULATED")
     }
 

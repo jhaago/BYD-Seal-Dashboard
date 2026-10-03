@@ -90,6 +90,21 @@ class SimulationEngineTest {
         assertEquals(0.0, engine.state.battery.stateOfChargePercent.value!!, 0.0)
         assertEquals(0.0, engine.state.powertrain.motorPowerKw.getValue(Axle.REAR).value!!, 0.0)
     }
+    @Test fun movingAtEmptySocCanRecoverKineticEnergyWhenBraking() {
+        drive(engine, 60.0)
+        advance(engine, clock, 200)
+        val speed = engine.state.motion.speedKmh.value!!
+        val recovered = engine.state.trip.recoveredDrivingEnergyKwh.value!!
+        engine.apply(MockCommand.SetSocPercent(0.0))
+        engine.apply(MockCommand.SetPedals(0.0, 1.0))
+        advance(engine, clock, 10)
+        assertTrue(engine.state.motion.speedKmh.value!! < speed)
+        assertTrue("Empty SOC blocks traction, not kinetic-energy recovery", engine.state.powertrain.regenPowerKw.value!! > 0.0)
+        assertTrue(engine.state.powertrain.packPowerKw.value!! < 0.0)
+        assertTrue(engine.state.battery.stateOfChargePercent.value!! > 0.0)
+        assertTrue(engine.state.trip.recoveredDrivingEnergyKwh.value!! > recovered)
+        assertTrue(engine.state.powertrain.motorPowerKw.getValue(Axle.REAR).value!! < 0.0)
+    }
     @Test fun fullBatteryStopsPlugInCharge() {
         engine.apply(MockCommand.SetSocPercent(100.0))
         engine.apply(MockCommand.SetCharging(true)); advance(engine, clock, 100)
