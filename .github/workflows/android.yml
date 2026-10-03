@@ -145,13 +145,17 @@ jobs:
           sudo chmod a+rw /dev/kvm
           "$ANDROID_HOME/emulator/emulator" -accel-check
           printf 'no\n' | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd -n seal-dashboard-test -k '${{ matrix.image }}' --device pixel_2
-          feature_args=()
-          # GLDirectMem override was ineffective; probe the other capability that
-          # gates read_color_buffer_dma in gfxstream's render-control source.
-          if [ '${{ matrix.api }}' = 37 ]; then feature_args=(-feature -HasSharedSlotsHostMemoryAllocator); fi
-          "$ANDROID_HOME/emulator/emulator" "${feature_args[@]}" -avd seal-dashboard-test -no-window -no-audio -no-boot-anim -no-snapshot -gpu "${{ matrix.gpu }}" -no-metrics -memory 2048 -partition-size 4096 > evidence/emulator.log 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd seal-dashboard-test -no-window -no-audio -no-boot-anim -no-snapshot -gpu "${{ matrix.gpu }}" -no-metrics -memory 2048 -partition-size 4096 > evidence/emulator.log 2>&1 &
           timeout 240 adb wait-for-device
           timeout 240 bash -c 'until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = 1 ]; do sleep 2; done'
+          # boot_completed can survive a crashing graphics-service restart loop.
+          adb logcat -d -b crash > evidence/boot-crashes.txt
+          if grep -q 'hasReadColorBufferDma' evidence/boot-crashes.txt; then
+            echo 'Emulator guest mapper compatibility failure before app installation' >&2
+            exit 1
+          fi
+          adb shell service check package | grep -q 'found'
+          adb shell service check window | grep -q 'found'
           adb shell input keyevent 82
           adb shell wm size 1920x1080
           adb shell wm density 160
@@ -177,7 +181,8 @@ jobs:
         run: |
           set -euo pipefail
           test_status=0
-          ./gradlew --no-daemon :app:connectedDebugAndroidTest || test_status=$?
+          ./gradlew --no-daemon :app:connectedDebugAndroidTest \
+            -Pandroid.testInstrumentationRunnerArguments.notAnnotation=io.github.jhaago.sealdashboard.ui.ProcessBoundaryTest || test_status=$?
           report_status=0
           python - <<'PY' || report_status=$?
           import glob, sys, xml.etree.ElementTree as ET
@@ -199,6 +204,28 @@ jobs:
           PY
           test "$test_status" -eq 0
           test "$report_status" -eq 0
+      - name: Verify process restart preserves only display preferences
+        if: ${{ !cancelled() && steps.boot.outcome == 'success' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:assembleDebug :app:assembleDebugAndroidTest
+          adb install -r app/build/outputs/apk/debug/app-debug.apk
+          adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          adb shell am instrument -w -r -e class io.github.jhaago.sealdashboard.ui.DashboardProcessTest#prepareForProcessRestart \
+            io.github.jhaago.sealdashboard.test/androidx.test.runner.AndroidJUnitRunner | tee evidence/process-seed.txt
+          adb shell am force-stop io.github.jhaago.sealdashboard
+          adb shell am instrument -w -r -e class io.github.jhaago.sealdashboard.ui.DashboardProcessTest#freshProcessRestoresOnlyDisplayPreferences \
+            io.github.jhaago.sealdashboard.test/androidx.test.runner.AndroidJUnitRunner | tee evidence/process-restart.txt
+          python - <<'PYPROCESS'
+          from pathlib import Path
+          import re
+          for name in ('process-seed', 'process-restart'):
+              output = Path('evidence/' + name + '.txt').read_text()
+              if not re.search(r'^OK \(1 test\)$', output, re.M) or 'FAILURES!!!' in output:
+                  raise SystemExit(name + ': missing successful process-boundary evidence')
+          print('Both process-boundary phases passed in separate processes')
+          PYPROCESS
       - name: Retain runtime evidence
         if: ${{ always() }}
         shell: bash

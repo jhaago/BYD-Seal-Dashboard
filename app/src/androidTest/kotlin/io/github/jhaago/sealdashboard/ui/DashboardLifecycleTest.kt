@@ -2,6 +2,8 @@ package io.github.jhaago.sealdashboard.ui
 
 import android.content.Intent
 import android.os.SystemClock
+import android.os.ParcelFileDescriptor
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import io.github.jhaago.sealdashboard.DashboardApplication
@@ -11,6 +13,7 @@ import io.github.jhaago.sealdashboard.mock.*
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Before
 
 /** Exercise the launched Activity, application-owned provider and actual foreground lifecycle. */
 class DashboardLifecycleTest {
@@ -21,6 +24,12 @@ class DashboardLifecycleTest {
         assertEquals(CommandResult.Accepted, container.simulation.dispatch(command))
     }
     private fun waitUntil(predicate: () -> Boolean) = compose.waitUntil(10_000, predicate)
+
+    @Before fun resetPriorActivityFixture() {
+        command(MockCommand.Reset)
+        command(MockCommand.Manual)
+        waitUntil { container.vehicle.status.value == ProviderStatus.RUNNING }
+    }
 
     @Test fun recreationPreservesSessionAndSelectedScreen() {
         command(MockCommand.Manual)
@@ -57,6 +66,9 @@ class DashboardLifecycleTest {
         compose.onNodeWithTag("provider-status").assertTextEquals("ERROR")
         assertEquals(before, provider.state.value)
         command(MockCommand.Reset)
+        command(MockCommand.SetPaused(true))
+        waitUntil { compose.activity.dashboardViewModel.uiState.value.formatter.number(
+            compose.activity.dashboardViewModel.uiState.value.vehicle.battery.stateOfChargePercent) == "80" }
         compose.onNodeWithTag("speed-value", true).assertTextEquals("0")
         compose.onNodeWithTag("soc-value", true).assertTextEquals("80")
         assertTrue(container.simulation.history.value.packPower.isEmpty())
@@ -75,8 +87,11 @@ class DashboardLifecycleTest {
         val start = SystemClock.elapsedRealtime()
         waitUntil { SystemClock.elapsedRealtime() - start >= 1500 }
         assertEquals(stopped, container.vehicle.state.value)
-        context.startActivity(Intent(context, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+        // Simulate the user launching the app from outside it. A background app
+        // context cannot bring itself forward on Android 10 (and should not).
+        val launch = InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(
+            "am start -W -n io.github.jhaago.sealdashboard/.MainActivity")
+        ParcelFileDescriptor.AutoCloseInputStream(launch).bufferedReader().use { it.readText() }
         waitUntil { container.vehicle.status.value == ProviderStatus.RUNNING }
         waitUntil { container.vehicle.state.value.sampledAtMillis > stopped.sampledAtMillis }
         val resumed = container.vehicle.state.value
