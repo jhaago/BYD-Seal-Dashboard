@@ -1,6 +1,6 @@
 # BYD Seal Dashboard — assistant and visual themes
 
-Status: proposed extension, ready for Jordan to review. This document captures the additions discussed after the original foundation plan; these features are not implemented yet.
+Status: design and both offline implementation plans approved by Jordan on 3 October 2026. This document captures the additions discussed after the original foundation plan; these features are not implemented yet.
 
 ## Intent
 
@@ -17,7 +17,7 @@ Themes and the assistant are separate implementation slices so either can be tes
 
 ## Visual system
 
-Use `DashboardVisualStyle` values `MODERN`, `SYSTEMS`, `TRON`. Modern preserves the current graphite/warm-white/cyan baseline. Systems is an original Collins-inspired instrumentation aesthetic: restrained blue/green panels, squared frames, concise subsystem labels, clear numeric readouts and original energy-flow/status graphics. Do not use defence screenshots, logos, operational layouts or proprietary assets. Systems graphics show only available typed signals; unsupported components remain unavailable.
+Use `DashboardVisualStyle` values `MODERN`, `SYSTEMS`, `TRON`. Modern preserves the current graphite/warm-white/cyan baseline. Systems is an original Collins-inspired instrumentation aesthetic: dark burgundy instrument backgrounds, pale-blue schematic lines, bright-green valid/active indicators, squared frames, compact technical labels, clear numeric readouts and original energy-flow/status graphics. Jordan’s supplied reference on 3 October clarified an older industrial mimic-panel look, rather than a generic blue/green modern dashboard. Draw original EV battery, inverter, motor and available cooling/temperature relationships; do not reproduce the reference’s actual submarine topology. Keep labels at the agreed readable size even where the reference is denser. Do not use defence screenshots, logos, operational layouts or proprietary assets. Systems graphics show only available typed signals; unsupported components remain unavailable.
 
 Tron uses dark map surfaces, subdued street/building geometry, cyan route glow, a clear vehicle marker, prominent next-turn instruction, ETA/distance and charging-stop cards. Geography should feel recognisable rather than a decorative abstract grid. The offline preview uses a fictional map and says `SIMULATED MAP`; it is not Google Maps tiles, directions or a real route. Live map styling is a later adapter choice, not permission to reuse Google artwork.
 
