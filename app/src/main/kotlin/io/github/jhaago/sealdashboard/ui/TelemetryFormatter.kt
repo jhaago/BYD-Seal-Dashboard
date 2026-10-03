@@ -8,7 +8,8 @@ class TelemetryFormatter(private val nowMillis: Long, private val status: Provid
     fun <T> quality(signal: Signal<T>): SignalQuality {
         val quality = signal.effectiveQuality(nowMillis, 2000)
         if (quality != SignalQuality.FRESH) return quality
-        if (signal.value is Double && !signal.value.isFinite()) return SignalQuality.ERROR
+        val value = signal.value
+        if (value is Double && !value.isFinite()) return SignalQuality.ERROR
         return if (status == ProviderStatus.DISCONNECTED || status == ProviderStatus.ERROR) SignalQuality.STALE else quality
     }
     fun <T> text(signal: Signal<T>, render: (T) -> String): String =
