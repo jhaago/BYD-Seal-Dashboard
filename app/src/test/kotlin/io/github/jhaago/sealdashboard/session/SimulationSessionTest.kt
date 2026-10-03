@@ -18,7 +18,7 @@ class SimulationSessionTest {
     }
     private class CountingProvider : VehicleDataProvider {
         var starts = 0; var stops = 0
-        override val state = MutableStateFlow(VehicleState())
+        override val state = MutableStateFlow(VehicleState(VehicleProfile.AUSTRALIAN_SEAL_DYNAMIC_2024))
         override val status = MutableStateFlow(ProviderStatus.IDLE)
         override val capabilities = MutableStateFlow(emptyMap<SignalKey, SignalCapability>())
         override val diagnostics = MutableStateFlow(emptyList<DiagnosticEvent>())

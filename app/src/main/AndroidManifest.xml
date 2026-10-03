@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
+        android:name=".DashboardApplication"
         android:allowBackup="false"
         android:label="Seal Dashboard · Mock"
         android:theme="@style/Theme.SealDashboard"

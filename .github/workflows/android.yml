@@ -31,7 +31,7 @@ jobs:
         uses: gradle/actions/setup-gradle@48b5f213c81028ace310571dc5ec0fbbca0b2947 # v4
         with:
           gradle-version: '9.6.0'
-          cache-read-only: true
+          cache-read-only: false
       - name: Verify versions and generate official wrapper
         id: wrapper
         shell: bash
@@ -92,6 +92,7 @@ jobs:
           path: |
             app/build/outputs/apk/debug/
             app/build/reports/
+            app/build/test-results/
             vehicle-core/build/reports/
             vehicle-core/build/test-results/
             vehicle-mock/build/reports/
