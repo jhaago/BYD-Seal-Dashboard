@@ -10,6 +10,7 @@ import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.filters.SdkSuppress
 import androidx.compose.ui.test.*
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import io.github.jhaago.sealdashboard.DashboardApplication
 import io.github.jhaago.sealdashboard.MainActivity
@@ -144,14 +145,14 @@ class DashboardLifecycleTest {
             compose.onNodeWithTag("nav-DRIVE").performClick()
             compose.onNodeWithTag("speed-value", true).assertIsDisplayed()
             compose.onNodeWithTag("soc-value", true).assertIsDisplayed()
-            captureDisplay("drive-rotated-portrait")
+            captureDisplay("drive-rotated-portrait", portrait = true)
             assertSame(provider, container.vehicle)
             assertEquals(snapshot, provider.state.value)
             assertEquals(DisplaySettings(DriveLayout.FULL, mirrored = true), DisplayPreferences(compose.activity).state.value)
             shell("settings put system user_rotation 0")
             waitUntil { compose.activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE }
             compose.onNodeWithTag("screen-DRIVE").assertExists()
-            captureDisplay("drive-rotated-landscape")
+            captureDisplay("drive-rotated-landscape", portrait = false)
             assertSame(provider, container.vehicle)
             assertEquals(snapshot, provider.state.value)
         } finally {
@@ -166,10 +167,17 @@ class DashboardLifecycleTest {
         return ParcelFileDescriptor.AutoCloseInputStream(descriptor).bufferedReader().use { it.readText() }
     }
 
-    private fun captureDisplay(name: String) {
-        compose.waitForIdle()
+    private fun captureDisplay(name: String, portrait: Boolean) {
+        // Configuration changes precede the rendered window's resize transaction.
+        compose.waitUntil(10_000) {
+            val bounds = compose.onNodeWithTag("dashboard-root").fetchSemanticsNode().boundsInRoot
+            if (portrait) bounds.height > bounds.width else bounds.width > bounds.height
+        }
+        compose.onNodeWithText("Companion preview").assertIsDisplayed()
+        compose.onNodeWithText("SIMULATED ROUTE").assertExists()
         val instrumentation = InstrumentationRegistry.getInstrumentation()
-        val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot())
+        val bitmap = compose.onNodeWithTag("dashboard-root").captureToImage().asAndroidBitmap()
+        assertEquals(portrait, bitmap.height > bitmap.width)
         val resolver = instrumentation.targetContext.contentResolver
         val values = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
