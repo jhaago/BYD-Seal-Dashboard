@@ -49,9 +49,9 @@ Package prefix `P` means `io/github/jhaago/sealdashboard`.
 
 **Consumes:** Task 1 service/search/actions. **Produces:** `TripAssistantController.state: StateFlow<AssistantState>`; `fun submit(text: String)`; `fun cancel()`; `fun applyProposal(id: String)`; `fun dismissProposal(id: String)`; state stores transcript, route/options snapshot, current proposal and phase Ready/Responding/ChoiceRequired/ProposalReady/Failed/Cancelled.
 
-- [ ] Add virtual-time `TripAssistantControllerTest`: requests “Find a charger on my way”, “Show the smallest detour”, “I need a faster charger”, then “Add the second option to my trip” resolve against current displayed station IDs; ambiguous destination asks clarification. Slow first request after completed second does not replace transcript/options; cancellation prevents late update; provider failure becomes Failed; stale proposal Apply leaves route unchanged; double Apply adds no extra stop.
-- [ ] Run targeted unit tests and observe failures. Implement controller with injected service/search/actions and coroutine scope, serialized state changes and request generation token. Scripted service handles only documented examples and returns clarification for unsupported input; do not imply general natural-language intelligence.
-- [ ] Run full module tests/lint/build. Commit `feat: add contextual scripted trip assistant controller`.
+- [x] Add virtual-time `TripAssistantControllerTest`: requests “Find a charger on my way”, “Show the smallest detour”, “I need a faster charger”, then “Add the second option to my trip” resolve against current displayed station IDs; ambiguous destination asks clarification. Slow first request after completed second does not replace transcript/options; cancellation prevents late update; provider failure becomes Failed; stale proposal Apply leaves route unchanged; double Apply adds no extra stop.
+- [x] Run targeted unit tests and observe failures. Implement controller with injected service/search/actions and coroutine scope, serialized state changes and request generation token. Scripted service handles only documented examples and returns clarification for unsupported input; do not imply general natural-language intelligence.
+- [x] Run full module tests/lint/build. Commit `feat: add contextual scripted trip assistant controller`.
 
 ### Task 3: Parked chat and compact driving preview
 

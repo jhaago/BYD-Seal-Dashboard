@@ -5,9 +5,15 @@ import androidx.compose.ui.Modifier
 import io.github.jhaago.sealdashboard.core.*
 import io.github.jhaago.sealdashboard.mock.*
 import io.github.jhaago.sealdashboard.preferences.*
+import io.github.jhaago.sealdashboard.demo.*
+import io.github.jhaago.sealdashboard.assistant.*
+import kotlinx.coroutines.*
 
 /** Explicit clock/steps; no background ticker, sleeps, random values or vehicle access. */
-class DashboardTestHost {
+class DashboardTestHost(service: AssistantService? = null) {
+    private val assistantScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    val navigation = DemoNavigationProvider()
+    val assistant = TripAssistantController(service ?: ScriptedAssistantService(DemoChargerSearchProvider()), PreviewRouteActions(navigation), assistantScope)
     var now = 0L
     val engine = SimulationEngine(SimulationConfig(), MonotonicClock { now })
     var ui by mutableStateOf(DashboardUiState(engine.state, ProviderStatus.RUNNING, now))
@@ -23,7 +29,9 @@ class DashboardTestHost {
         simulation = engine.simulationStatus
     }
     @Composable fun Content(modifier: Modifier = Modifier) {
+        DisposableEffect(this@DashboardTestHost) { onDispose { assistantScope.cancel() } }
+        val nav by navigation.state.collectAsState()
         DashboardContent(ui, simulation, { ui = ui.copy(destination = it) }, ::command,
-            display, { display = it }, modifier = modifier)
+            display, { display = it }, modifier = modifier, demos = DashboardDemoState(navigation = nav))
     }
 }
