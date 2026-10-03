@@ -3,8 +3,12 @@ package io.github.jhaago.sealdashboard.ui
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.SystemClock
+import android.content.ContentValues
+import android.graphics.Bitmap
+import android.provider.MediaStore
 import android.os.ParcelFileDescriptor
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.filters.SdkSuppress
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import io.github.jhaago.sealdashboard.DashboardApplication
@@ -122,6 +126,7 @@ class DashboardLifecycleTest {
         compose.onNodeWithTag("real-provider").performScrollTo().assertIsDisplayed()
     }
 
+    @SdkSuppress(minSdkVersion = 29)
     @Test fun physicalDisplayRotationKeepsTelemetryPreferencesAndDestination() {
         command(MockCommand.SetSocPercent(63.0))
         command(MockCommand.SetPaused(true))
@@ -163,7 +168,21 @@ class DashboardLifecycleTest {
 
     private fun captureDisplay(name: String) {
         compose.waitForIdle()
-        val path = "/sdcard/Pictures/SealDashboardEvaluation/$name.png"
-        assertEquals("SAVED", shell("mkdir -p /sdcard/Pictures/SealDashboardEvaluation && screencap -p $path && test -s $path && echo SAVED").trim())
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val bitmap = requireNotNull(instrumentation.uiAutomation.takeScreenshot())
+        val resolver = instrumentation.targetContext.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, "$name.png")
+            put(MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/SealDashboardEvaluation")
+        }
+        val uri = requireNotNull(resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values))
+        try {
+            requireNotNull(resolver.openOutputStream(uri)).use {
+                assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, it))
+            }
+        } finally {
+            bitmap.recycle()
+        }
     }
 }
