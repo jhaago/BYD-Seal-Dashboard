@@ -18,15 +18,18 @@ object DashboardColors {
     val Warning = Color(0xFFFFCB78)
     val Grid = Color(0xFF2B3943)
 }
-@Composable fun DashboardTheme(content: @Composable () -> Unit) {
+@Composable fun DashboardTheme(style: DashboardVisualStyle = DashboardVisualStyle.MODERN, content: @Composable () -> Unit) {
+    val palette = paletteFor(style)
+    val family = if (style == DashboardVisualStyle.SYSTEMS) FontFamily.Monospace else FontFamily.SansSerif
     MaterialTheme(
-        colorScheme = darkColorScheme(primary = DashboardColors.Accent, onPrimary = DashboardColors.Background,
-            background = DashboardColors.Background, onBackground = DashboardColors.Text,
-            surface = DashboardColors.Surface, onSurface = DashboardColors.Text,
-            secondary = DashboardColors.Muted, outline = DashboardColors.Grid),
-        typography = Typography(bodyLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontSize = 18.sp, lineHeight = 24.sp),
-            bodyMedium = TextStyle(fontFamily = FontFamily.SansSerif, fontSize = 16.sp, lineHeight = 22.sp),
-            labelLarge = TextStyle(fontFamily = FontFamily.SansSerif, fontSize = 16.sp, lineHeight = 22.sp)),
-        content = { CompositionLocalProvider(LocalContentColor provides DashboardColors.Text, content = content) },
+        colorScheme = darkColorScheme(primary = palette.accent, onPrimary = palette.background,
+            background = palette.background, onBackground = palette.text,
+            surface = palette.surface, onSurface = palette.text,
+            secondary = palette.muted, outline = palette.grid, error = palette.error),
+        typography = Typography(bodyLarge = TextStyle(fontFamily = family, fontSize = 18.sp, lineHeight = 24.sp),
+            bodyMedium = TextStyle(fontFamily = family, fontSize = 16.sp, lineHeight = 22.sp),
+            labelLarge = TextStyle(fontFamily = family, fontSize = 16.sp, lineHeight = 22.sp)),
+        content = { CompositionLocalProvider(LocalContentColor provides palette.text,
+            LocalDashboardPalette provides palette, LocalDashboardStyle provides style, content = content) },
     )
 }
