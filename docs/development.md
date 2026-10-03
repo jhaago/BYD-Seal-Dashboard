@@ -28,3 +28,13 @@ The first shell required removal of an API 27-only style attribute from common r
 References: [Gradle 9.6.0 published checksums](https://github.com/gradle/gradle-distributions/releases/tag/v9.6.0), [AGP 9.4 compatibility](https://developer.android.com/build/releases/agp-9-4-0-release-notes), [AGP built-in Kotlin](https://developer.android.com/build/migrate-to-built-in-kotlin).
 
 No vehicle permissions, actuator commands, proprietary assets, platform keys or firmware changes are part of this workflow.
+
+## Simulator assumptions (not vehicle specifications)
+
+The deterministic engine uses an illustrative 60 kWh pack, 2,000 kg mass, 140 kW rear mechanical-power limit, 45 kW recovered-power limit, 7 kW stored charging power and 0.15 kWh/km range estimate. These numbers are simulator settings, not verified Australian Seal Dynamic specifications or calibrated performance predictions.
+
+The documented reset baseline is 80% SOC, 0 km/h, Park, Normal mode, four 250 kPa tyres at 24°C, closed doors/boot, climate off and no trip/history. Demo mode repeats a 93-second parked/accelerating/cruising/regen/stopped-charging journey. Manual commands cancel demo control; pause freezes physics. Climate and tyre temperature evolution are deliberately illustrative.
+
+Physics integrates in steps no larger than 50 ms; explicit outer steps must be finite and within 0–60 seconds. The app provider will use 100 ms updates and must never feed background elapsed time into the model. Power and SOC histories sample at 1 Hz, bounded to 60 and 900 points respectively. History's shared read-only value type belongs to core so a later real provider can supply graph data without exposing mock commands.
+
+Plug-in charging forces a stopped/Park simulation and never counts as trip regeneration. Current/power are signed positive discharge, negative stored charging/recovery. The engine is pure Kotlin, has an injected monotonic clock and contains no Android APIs or real vehicle commands. Runtime provider wiring and dashboard screens are still separate remaining tasks.

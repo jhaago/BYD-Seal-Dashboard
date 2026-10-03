@@ -8,6 +8,7 @@ interface VehicleDataProvider {
     val status: StateFlow<ProviderStatus>
     val capabilities: StateFlow<Map<SignalKey, SignalCapability>>
     val diagnostics: StateFlow<List<DiagnosticEvent>>
+    val history: StateFlow<TelemetryHistory>
     fun start()
     fun stop()
 }
