@@ -1,6 +1,6 @@
 # BYD Seal Dashboard — proposed first milestone
 
-Status: proposed for Jordan's review. This is a design, not a completed app or an implementation plan.
+Status: design approved in conversation; implementation plan prepared for execution review. This is a design, not a completed app. See the [mock APK implementation plan](../plans/2026-10-03-mock-dashboard-apk.md).
 
 ## Intent and scope
 
