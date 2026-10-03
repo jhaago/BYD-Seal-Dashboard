@@ -99,7 +99,13 @@ class DashboardLifecycleTest {
         // Bound by foreground wall time plus two ticker steps for scheduling.
         // At >=59 km/h, integrating the hidden 1.5 s exceeds that margin.
         val activeSeconds = (SystemClock.elapsedRealtime() - resumeRequestedAt + 200) / 1000.0
-        assertTrue(resumed.trip.distanceKm.value!! - stopped.trip.distanceKm.value!! <= activeSeconds * 60.0 / 3600.0)
+        val distance = resumed.trip.distanceKm.value!! - stopped.trip.distanceKm.value!!
+        val permittedDistance = activeSeconds * 60.0 / 3600.0
+        assertTrue(distance <= permittedDistance)
+        // Check that this observed run's bound rejects a deliberate hidden-time
+        // contribution; this fails if the oracle is loosened until it is useless.
+        val hiddenDistance = stopped.motion.speedKmh.value!! * 1.5 / 3600.0
+        assertFalse("Resume oracle must reject 1.5 seconds of hidden motion", distance + hiddenDistance <= permittedDistance)
         compose.onNodeWithTag("source-label").assertTextEquals("SIMULATED")
     }
 

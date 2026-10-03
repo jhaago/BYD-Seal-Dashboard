@@ -8,7 +8,13 @@
 
 **Tech Stack:** Kotlin, Jetpack Compose, coroutines/StateFlow, JUnit, Compose instrumentation tests, JDK 17. Initial toolchain candidate: AGP 9.4.0, Gradle 9.6.0, Kotlin/Compose compiler 2.4.10, Compose BOM 2026.09.00, compile/target API 37, minSdk 24. Resolve and verify these together in Task 1 before feature development; pin other library versions in the catalog, never use dynamic versions.
 
-**Spec:** `docs/superpowers/specs/2026-10-03-mock-dashboard-design.md`, approved in conversation; this plan is awaiting execution review.
+**Spec:** `docs/superpowers/specs/2026-10-03-mock-dashboard-design.md`, approved in conversation; execution was approved in conversation; resume the recovery checkpoint below.
+
+## Recovery checkpoint — 3 October 2026
+
+Tasks 1–3 and the Task 4 UI exist on the feature branch; do not recreate them from unchecked historical step boxes. Seven screenshot fixtures have now been inspected. At `5f8f5b1`, run 37130411312 passed module tests, lint/build, 13 API 29 runtime tests and both separate-process restart phases. The review tightened the no-catch-up runtime assertion and identified empty-SOC recovery as a boundary regression; its red/green evidence and final HEAD belong in `docs/testing/mock-apk-verification.md`. API 37 remains an emulator environment blocker, not a completed gate. Task 5 is incomplete until that runtime requirement is met.
+
+Next-scope designs live in `../specs/2026-10-03-assistant-and-visual-themes-design.md`; proposed plans are `2026-10-03-dashboard-visual-themes.md` and `2026-10-03-trip-assistant-preview.md`. They describe offline visual/conversation previews; no new subsystem is implemented by these documents.
 
 ## Global Constraints
 

@@ -175,12 +175,14 @@ class SimulationEngine(config: SimulationConfig, private val clock: MonotonicClo
             speedMps = if (gear == Gear.PARK) 0.0 else (oldSpeed + requestedA * dt).coerceIn(0.0, config.maxSpeedKmh / 3.6)
             acceleration = (speedMps - oldSpeed) / dt
             val meanSpeed = (oldSpeed + speedMps) / 2.0
-            val mechanicalKw = if (driven && socPercent > 0) (config.massKg * acceleration + resistanceN) * meanSpeed / 1000.0 else 0.0
+            // Empty SOC forbids positive traction, but a moving vehicle still
+            // has kinetic energy available for regenerative braking.
+            val mechanicalKw = if (driven) (config.massKg * acceleration + resistanceN) * meanSpeed / 1000.0 else 0.0
             regenKw = if (driven && socPercent < 100.0 && mechanicalKw < 0) min(-mechanicalKw * 0.7, config.maxRegenPowerKw) else 0.0
             // Limit recovery/discharge by actual remaining energy in this physics substep.
             regenKw = min(regenKw, (100.0 - socPercent) / 100.0 * config.capacityKwh * 3600.0 / dt + aux)
             motorKw = if (mechanicalKw >= 0) mechanicalKw.coerceAtMost(config.maxMotorPowerKw) else -regenKw / 0.7
-            packKw = if (socPercent <= 0) 0.0 else if (motorKw >= 0) motorKw / 0.92 + aux else aux - regenKw
+            packKw = if (motorKw >= 0) motorKw / 0.92 + aux else aux - regenKw
             if (packKw > 0) packKw = min(packKw, socPercent / 100.0 * config.capacityKwh * 3600.0 / dt)
             distanceKm += meanSpeed * dt / 1000.0
             grossKwh += max(packKw, 0.0) * dt / 3600.0
