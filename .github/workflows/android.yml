@@ -51,10 +51,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list --channel=0 | rg 'platforms;android-|build-tools;36\.'
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37' 'build-tools;36.0.0' 'platform-tools'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list --channel=0 | grep -E 'platforms;android-|build-tools;36\.'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-37.0' 'build-tools;36.0.0' 'platform-tools'
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --list_installed
-          test -f "$ANDROID_HOME/platforms/android-37/android.jar"
+          test -f "$ANDROID_HOME/platforms/android-37.0/android.jar"
           test -x "$ANDROID_HOME/build-tools/36.0.0/aapt2"
       - name: Upload generated wrapper
         if: ${{ always() && steps.wrapper.outcome == 'success' }}
