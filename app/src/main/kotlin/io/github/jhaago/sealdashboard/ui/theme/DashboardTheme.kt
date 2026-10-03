@@ -1,12 +1,14 @@
 package io.github.jhaago.sealdashboard.ui.theme
 
 import androidx.compose.material3.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.dp
 
 object DashboardColors {
     val Background = Color(0xFF0B1015)
@@ -26,6 +28,11 @@ object DashboardColors {
             background = palette.background, onBackground = palette.text,
             surface = palette.surface, onSurface = palette.text,
             secondary = palette.muted, outline = palette.grid, error = palette.error),
+        shapes = Shapes(extraSmall = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 4.dp),
+            small = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 8.dp),
+            medium = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 12.dp),
+            large = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 16.dp),
+            extraLarge = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 24.dp)),
         typography = Typography(bodyLarge = TextStyle(fontFamily = family, fontSize = 18.sp, lineHeight = 24.sp),
             bodyMedium = TextStyle(fontFamily = family, fontSize = 16.sp, lineHeight = 22.sp),
             labelLarge = TextStyle(fontFamily = family, fontSize = 16.sp, lineHeight = 22.sp)),

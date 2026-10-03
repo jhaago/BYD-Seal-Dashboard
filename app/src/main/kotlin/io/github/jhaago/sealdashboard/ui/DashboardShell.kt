@@ -41,27 +41,29 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
     onDestination: (DashboardDestination) -> Unit, onCommand: (MockCommand) -> CommandResult,
     display: DisplaySettings, onDisplayChange: (DisplaySettings) -> Unit,
     modifier: Modifier = Modifier, demos: DashboardDemoState = DashboardDemoState()) {
-    DashboardTheme {
+    DashboardTheme(display.visualStyle) {
+        val colors = LocalDashboardPalette.current
         var rejection by remember { mutableStateOf<String?>(null) }
         val mockCommand: (MockCommand) -> CommandResult = { command ->
             val result = onCommand(command)
             rejection = (result as? CommandResult.Rejected)?.reason
             result
         }
-        Column(modifier.fillMaxSize().testTag("dashboard-root").background(DashboardColors.Background).safeDrawingPadding()) {
+        Column(modifier.fillMaxSize().testTag("dashboard-root").background(colors.background).safeDrawingPadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text("SEAL", fontSize = 24.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Medium)
-                    Text("Dashboard", fontSize = 16.sp, color = DashboardColors.Muted)
+                    Text("Dashboard", fontSize = 16.sp, color = colors.muted)
                 }
                 Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                    Text(ui.sourceLabel, Modifier.testTag("source-label"), color = DashboardColors.Accent, fontSize = 16.sp)
+                    Text(ui.sourceLabel, Modifier.testTag("source-label"), color = colors.accent, fontSize = 16.sp)
                     Text(ui.status.name, Modifier.testTag("provider-status"), fontSize = 16.sp,
-                        color = if (ui.status == io.github.jhaago.sealdashboard.core.ProviderStatus.RUNNING) DashboardColors.Muted else DashboardColors.Warning)
+                        color = if (ui.status == io.github.jhaago.sealdashboard.core.ProviderStatus.RUNNING) colors.muted else colors.warning)
                 }
+                ThemeAction(display.visualStyle) { onDisplayChange(display.copy(visualStyle = it)) }
             }
-            HorizontalDivider(color = DashboardColors.Grid)
+            HorizontalDivider(color = colors.grid)
             Box(Modifier.weight(1f).fillMaxWidth().testTag("screen-${ui.destination.name}")) {
                 when (ui.destination) {
                     DashboardDestination.DRIVE -> DriveScreen(ui, display, onDisplayChange, demos)
@@ -70,19 +72,19 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
                     DashboardDestination.DEVELOPMENT -> DevelopmentScreen(ui, simulation, mockCommand, display, onDisplayChange)
                 }
             }
-            rejection?.let { Text(it, Modifier.fillMaxWidth().background(DashboardColors.Elevated).padding(12.dp).testTag("command-result"),
-                color = DashboardColors.Warning, fontSize = 16.sp) }
-            HorizontalDivider(color = DashboardColors.Grid)
+            rejection?.let { Text(it, Modifier.fillMaxWidth().background(colors.elevated).padding(12.dp).testTag("command-result"),
+                color = colors.warning, fontSize = 16.sp) }
+            HorizontalDivider(color = colors.grid)
             Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DashboardDestination.entries.forEach { destination ->
                     val selected = ui.destination == destination
                     TextButton(onClick = { rejection = null; onDestination(destination) },
                         modifier = Modifier.weight(1f).heightIn(min = 56.dp).testTag("nav-${destination.name}")
                             .semantics { contentDescription = destination.label }
-                            .background(if (selected) DashboardColors.Elevated else DashboardColors.Background, RoundedCornerShape(14.dp)),
+                            .background(if (selected) colors.elevated else colors.background, dashboardPanelShape()),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 12.dp)) {
                         Text(if (destination == DashboardDestination.DEVELOPMENT) "Dev" else destination.label, fontSize = 16.sp,
-                            color = if (selected) DashboardColors.Accent else DashboardColors.Muted)
+                            color = if (selected) colors.accent else colors.muted)
                     }
                 }
             }

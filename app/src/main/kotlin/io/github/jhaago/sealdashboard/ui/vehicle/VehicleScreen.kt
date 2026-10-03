@@ -9,12 +9,14 @@ import androidx.compose.ui.unit.*
 import io.github.jhaago.sealdashboard.core.*
 import io.github.jhaago.sealdashboard.ui.*
 import io.github.jhaago.sealdashboard.ui.components.*
-import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
+import io.github.jhaago.sealdashboard.ui.theme.*
 
 @Composable fun VehicleScreen(ui: DashboardUiState) {
+    val colors = LocalDashboardPalette.current
     val v = ui.vehicle; val f = ui.formatter
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         SectionTitle("Vehicle", "Australian 2024 Seal Dynamic · single-motor RWD")
+        if (LocalDashboardStyle.current == DashboardVisualStyle.SYSTEMS) SystemMimic(ui)
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val tyreInfo: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -24,7 +26,7 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
                                 val state = v.wheels[wheel] ?: WheelState()
                                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     TelemetryReadout(wheel.name.replace('_', ' ').lowercase().replaceFirstChar { it.uppercase() }, f.number(state.pressureKpa), "kPa")
-                                    Text("${f.number(state.temperatureC)}°C · simulated", fontSize = 16.sp, color = DashboardColors.Muted)
+                                    Text("${f.number(state.temperatureC)}°C · simulated", fontSize = 16.sp, color = colors.muted)
                                 }
                             }
                         }
@@ -49,6 +51,6 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
         Text("Charging · ${f.text(v.charging.status) { it.name.lowercase() }} · ${f.number(v.charging.chargePowerKw, 1)} kW", fontSize = 18.sp)
         Text("Battery ${f.number(v.environment.batteryTemperatureC)}°C · cabin ${f.number(v.environment.cabinTemperatureC)}°C", fontSize = 18.sp)
         Text("Climate · ${f.text(v.climate.enabled) { if (it) "on" else "off" }} · ${f.number(v.climate.targetTemperatureC)}°C setpoint", fontSize = 18.sp)
-        Text("Window telemetry is unavailable in this mock build.", color = DashboardColors.Muted, fontSize = 16.sp)
+        Text("Window telemetry is unavailable in this mock build.", color = colors.muted, fontSize = 16.sp)
     }
 }

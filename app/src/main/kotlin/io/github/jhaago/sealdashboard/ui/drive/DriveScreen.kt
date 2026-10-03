@@ -16,9 +16,10 @@ import androidx.compose.ui.unit.*
 import io.github.jhaago.sealdashboard.demo.*
 import io.github.jhaago.sealdashboard.preferences.*
 import io.github.jhaago.sealdashboard.ui.DashboardUiState
-import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
+import io.github.jhaago.sealdashboard.ui.theme.*
 
 @Composable fun DriveScreen(ui: DashboardUiState, display: DisplaySettings, onDisplayChange: (DisplaySettings) -> Unit, demos: DashboardDemoState) {
+    val colors = LocalDashboardPalette.current
     BoxWithConstraints(Modifier.fillMaxSize().padding(16.dp)) {
         val wide = maxWidth >= 1100.dp && maxHeight >= 480.dp && LocalDensity.current.fontScale <= 1.15f
         if (wide) {
@@ -29,7 +30,7 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
                 }
                 val telemetry: @Composable () -> Unit = {
                     CompanionPane(ui, display, onDisplayChange, false, Modifier.weight(1f).fillMaxHeight()
-                        .testTag("telemetry-pane").background(DashboardColors.Surface, RoundedCornerShape(24.dp))
+                        .testTag("telemetry-pane").background(colors.surface, dashboardPanelShape())
                         .verticalScroll(rememberScrollState()).padding(20.dp))
                 }
                 if (display.mirrored) { telemetry(); projection() } else { projection(); telemetry() }
@@ -42,28 +43,29 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
 }
 
 @Composable private fun ProjectionPane(demos: DashboardDemoState, layout: DriveLayout, modifier: Modifier) {
-    Column(modifier.background(DashboardColors.Surface, RoundedCornerShape(24.dp)).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val colors = LocalDashboardPalette.current
+    Column(modifier.background(colors.surface, dashboardPanelShape()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(if (layout == DriveLayout.COMPANION) demos.projection.sourceLabel else demos.navigation.sourceLabel,
-            color = DashboardColors.Accent, fontSize = 16.sp)
+            color = colors.accent, fontSize = 16.sp)
         Text(demos.navigation.instruction, fontSize = 28.sp)
-        Text("${demos.navigation.distanceKm} km · ${demos.navigation.minutes} min · demonstration only", fontSize = 16.sp, color = DashboardColors.Muted)
+        Text("${demos.navigation.distanceKm} km · ${demos.navigation.minutes} min · demonstration only", fontSize = 16.sp, color = colors.muted)
         Canvas(Modifier.fillMaxWidth().weight(1f)) {
             val step = 48.dp.toPx()
             var x = 0f
-            while (x <= size.width) { drawLine(DashboardColors.Grid.copy(alpha = .5f), Offset(x, 0f), Offset(x, size.height), 1.dp.toPx()); x += step }
+            while (x <= size.width) { drawLine(colors.grid.copy(alpha = .5f), Offset(x, 0f), Offset(x, size.height), 1.dp.toPx()); x += step }
             var y = 0f
-            while (y <= size.height) { drawLine(DashboardColors.Grid.copy(alpha = .5f), Offset(0f, y), Offset(size.width, y), 1.dp.toPx()); y += step }
+            while (y <= size.height) { drawLine(colors.grid.copy(alpha = .5f), Offset(0f, y), Offset(size.width, y), 1.dp.toPx()); y += step }
             val path = Path()
             demos.navigation.route.forEachIndexed { index, point ->
                 if (index == 0) path.moveTo(point.x * size.width, point.y * size.height)
                 else path.lineTo(point.x * size.width, point.y * size.height)
             }
-            drawPath(path, DashboardColors.Accent.copy(alpha = .15f), style = Stroke(20.dp.toPx(), cap = StrokeCap.Round))
-            drawPath(path, DashboardColors.Accent, style = Stroke(4.dp.toPx(), cap = StrokeCap.Round))
-            demos.navigation.route.firstOrNull()?.let { drawCircle(DashboardColors.Text, 6.dp.toPx(), Offset(it.x * size.width, it.y * size.height)) }
+            drawPath(path, colors.accent.copy(alpha = .15f), style = Stroke(20.dp.toPx(), cap = StrokeCap.Round))
+            drawPath(path, colors.accent, style = Stroke(4.dp.toPx(), cap = StrokeCap.Round))
+            demos.navigation.route.firstOrNull()?.let { drawCircle(colors.text, 6.dp.toPx(), Offset(it.x * size.width, it.y * size.height)) }
         }
-        Text(demos.media.sourceLabel, fontSize = 16.sp, color = DashboardColors.Muted)
+        Text(demos.media.sourceLabel, fontSize = 16.sp, color = colors.muted)
         Text("${demos.media.title} · ${demos.media.artist}", fontSize = 18.sp)
-        Text(demos.projection.explanation, fontSize = 16.sp, color = DashboardColors.Muted)
+        Text(demos.projection.explanation, fontSize = 16.sp, color = colors.muted)
     }
 }

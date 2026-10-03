@@ -16,6 +16,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import io.github.jhaago.sealdashboard.core.*
 import io.github.jhaago.sealdashboard.mock.*
 import io.github.jhaago.sealdashboard.preferences.*
+import io.github.jhaago.sealdashboard.ui.theme.*
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -26,43 +27,48 @@ import java.io.File
 class DashboardScreenshotsTest {
     @get:Rule val compose = createComposeRule()
     @Test fun captureBothDriveModesAllScreensAndLargeTextPortrait() {
-        val host = DashboardTestHost()
-        repeat(400) { host.step(.1) }
+        var host by mutableStateOf(DashboardTestHost())
         var size by mutableStateOf(Triple(1280, 720, 1f))
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, size.third)) {
                 host.Content(Modifier.requiredSize(size.first.dp, size.second.dp))
             }
         }
-        capture("drive-companion")
-        compose.runOnIdle { host.display = host.display.copy(layout = DriveLayout.FULL) }
-        capture("drive-full")
-        compose.runOnIdle {
-            host.command(MockCommand.SetGear(Gear.PARK))
-            host.command(MockCommand.SetDoor(Door.FRONT_LEFT, true))
-            host.command(MockCommand.SetTyrePressureKpa(Wheel.REAR_RIGHT, 235.0))
-            host.ui = host.ui.copy(destination = DashboardDestination.VEHICLE)
+        for (style in DashboardVisualStyle.entries) {
+            compose.runOnIdle {
+                host = DashboardTestHost()
+                repeat(400) { host.step(.1) }
+                host.display = DisplaySettings(visualStyle = style)
+                size = Triple(1280, 720, 1f)
+            }
+            val prefix = style.name.lowercase()
+            capture("$prefix-drive-companion")
+            compose.runOnIdle { host.display = host.display.copy(layout = DriveLayout.FULL) }
+            capture("$prefix-drive-full")
+            compose.runOnIdle {
+                host.command(MockCommand.SetGear(Gear.PARK))
+                host.command(MockCommand.SetDoor(Door.FRONT_LEFT, true))
+                host.command(MockCommand.SetTyrePressureKpa(Wheel.REAR_RIGHT, 235.0))
+                host.ui = host.ui.copy(destination = DashboardDestination.VEHICLE)
+            }
+            capture("$prefix-vehicle")
+            compose.runOnIdle {
+                host.command(MockCommand.SetDoor(Door.FRONT_LEFT, false))
+                host.command(MockCommand.SetGear(Gear.DRIVE))
+                host.command(MockCommand.SetTargetSpeedKmh(60.0))
+                repeat(100) { host.step(.1) }
+                host.command(MockCommand.SetTargetSpeedKmh(0.0))
+                repeat(30) { host.step(.1) }
+                host.ui = host.ui.copy(destination = DashboardDestination.ENERGY)
+            }
+            capture("$prefix-energy")
+            compose.runOnIdle { host.ui = host.ui.copy(destination = DashboardDestination.DEVELOPMENT) }
+            capture("$prefix-development")
+            compose.runOnIdle { host.ui = host.ui.copy(destination = DashboardDestination.DRIVE); size = Triple(600, 960, 1.3f) }
+            capture("$prefix-drive-portrait-large-text")
+            compose.runOnIdle { size = Triple(400, 720, 1.3f) }
+            capture("$prefix-drive-compact-large-text")
         }
-        capture("vehicle")
-        compose.runOnIdle {
-            host.command(MockCommand.SetDoor(Door.FRONT_LEFT, false))
-            host.command(MockCommand.SetGear(Gear.DRIVE))
-            host.command(MockCommand.SetTargetSpeedKmh(60.0))
-            repeat(100) { host.step(.1) }
-            host.command(MockCommand.SetTargetSpeedKmh(0.0))
-            repeat(30) { host.step(.1) }
-            host.ui = host.ui.copy(destination = DashboardDestination.ENERGY)
-        }
-        capture("energy")
-        compose.runOnIdle { host.ui = host.ui.copy(destination = DashboardDestination.DEVELOPMENT) }
-        capture("development")
-        compose.runOnIdle {
-            host.ui = host.ui.copy(destination = DashboardDestination.DRIVE)
-            size = Triple(600, 960, 1.3f)
-        }
-        capture("drive-portrait-large-text")
-        compose.runOnIdle { size = Triple(400, 720, 1.3f) }
-        capture("drive-compact-large-text")
     }
     private fun capture(name: String) {
         compose.waitForIdle()

@@ -9,12 +9,14 @@ import androidx.compose.ui.unit.*
 import io.github.jhaago.sealdashboard.core.*
 import io.github.jhaago.sealdashboard.ui.*
 import io.github.jhaago.sealdashboard.ui.components.*
-import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
+import io.github.jhaago.sealdashboard.ui.theme.*
 
 @Composable fun EnergyScreen(ui: DashboardUiState) {
+    val colors = LocalDashboardPalette.current
     val v = ui.vehicle; val f = ui.formatter
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         SectionTitle("Energy", "Rear motor and HV pack are separate signals. Positive = discharge; negative = recovery / charging.")
+        if (LocalDashboardStyle.current == DashboardVisualStyle.SYSTEMS) SystemMimic(ui)
         val metrics = listOf(
             Triple("Rear motor output", f.number(v.powertrain.motorPowerKw[Axle.REAR] ?: Signal.unavailable(), 1), "kW"),
             Triple("HV pack power", f.number(v.powertrain.packPowerKw, 1), "kW"),
@@ -56,6 +58,6 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
             }
         }
         Text("Efficiency appears after 0.1 km. Plug-in charging is not trip regeneration. Simulator parameters are illustrative, not calibrated BYD specifications.",
-            fontSize = 16.sp, color = DashboardColors.Muted)
+            fontSize = 16.sp, color = colors.muted)
     }
 }

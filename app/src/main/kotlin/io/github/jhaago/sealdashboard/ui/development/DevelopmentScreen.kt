@@ -12,14 +12,16 @@ import io.github.jhaago.sealdashboard.mock.*
 import io.github.jhaago.sealdashboard.preferences.*
 import io.github.jhaago.sealdashboard.ui.*
 import io.github.jhaago.sealdashboard.ui.components.*
-import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
+import io.github.jhaago.sealdashboard.ui.theme.*
 
 @Composable fun DevelopmentScreen(ui: DashboardUiState, simulation: SimulationStatus, command: (MockCommand) -> CommandResult,
     display: DisplaySettings, onDisplayChange: (DisplaySettings) -> Unit) {
+    val colors = LocalDashboardPalette.current
     val v = ui.vehicle; val f = ui.formatter
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SectionTitle("Development", "All controls below affect simulation only.")
-        Text("${simulation.mode} · ${if (simulation.paused) "PAUSED" else "foreground simulation"}", color = DashboardColors.Accent, fontSize = 18.sp)
+        ThemeSelector(display.visualStyle) { onDisplayChange(display.copy(visualStyle = it)) }
+        Text("${simulation.mode} · ${if (simulation.paused) "PAUSED" else "foreground simulation"}", color = colors.accent, fontSize = 18.sp)
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MockButton("Demo", "demo-mode") { command(MockCommand.Demo) }
             MockButton("Manual", "manual-mode") { command(MockCommand.Manual) }
@@ -33,7 +35,7 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
         SimulationSlider("Target speed", simulation.targetSpeedKmh, 0f..simulation.config.maxSpeedKmh.toFloat(), "km/h", "target-speed") { command(MockCommand.SetTargetSpeedKmh(it)) }
         SimulationSlider("Accelerator input", simulation.throttle, 0f..1f, "fraction", "throttle") { command(MockCommand.SetPedals(it, simulation.brake)) }
         SimulationSlider("Brake input", simulation.brake, 0f..1f, "fraction", "brake") { command(MockCommand.SetPedals(simulation.throttle, it)) }
-        Text("Target-speed and pedal controls are alternative simulation inputs; editing either selects that method.", fontSize = 16.sp, color = DashboardColors.Muted)
+        Text("Target-speed and pedal controls are alternative simulation inputs; editing either selects that method.", fontSize = 16.sp, color = colors.muted)
         v.battery.stateOfChargePercent.value?.let { value ->
             SimulationSlider("Mock SOC", value, 0f..100f, "%", "soc-control") { command(MockCommand.SetSocPercent(it)) }
         } ?: Text("SOC unavailable — clear its injected fault to edit.", fontSize = 18.sp)
@@ -72,7 +74,7 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
         SimulationAssumptions(ui, simulation, command)
         SectionTitle("Data source")
         MockButton("BYD real provider — unavailable", "real-provider", false) {}
-        Text("Real telemetry is not integrated. Mock controls never command the vehicle.", fontSize = 18.sp, color = DashboardColors.Warning)
+        Text("Real telemetry is not integrated. Mock controls never command the vehicle.", fontSize = 18.sp, color = colors.warning)
         SectionTitle("Injected faults")
         var signal by remember { mutableStateOf(SignalKey.SPEED) }
         var menu by remember { mutableStateOf(false) }
@@ -97,7 +99,7 @@ import io.github.jhaago.sealdashboard.ui.theme.DashboardColors
         rawSignals(v).forEach { raw ->
             Text("${raw.name} [${raw.unit}] · ${raw.signal.value ?: "—"}", fontSize = 16.sp)
             Text("${if (raw.signal.value == null) "NO SAMPLE" else raw.signal.source.name} · ${f.quality(raw.signal)} · t=${raw.signal.observedAtMillis} ms",
-                fontSize = 16.sp, color = DashboardColors.Muted)
+                fontSize = 16.sp, color = colors.muted)
         }
     }
 }
