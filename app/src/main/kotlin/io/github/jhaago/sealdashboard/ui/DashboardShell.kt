@@ -142,7 +142,7 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
         Row(Modifier.fillMaxWidth().heightIn(min = 54.dp).padding(horizontal = 8.dp),
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            LegacyNavButton("DASH", overview, "nav-OVERVIEW", Modifier.weight(1f), onOverview)
+            LegacyNavButton("DRIVE", overview, "nav-OVERVIEW", Modifier.weight(1f), onOverview)
             listOf(DashboardDestination.DRIVE, DashboardDestination.VEHICLE, DashboardDestination.ENERGY,
                 DashboardDestination.ASSISTANT, DashboardDestination.DEVELOPMENT).forEach { destination ->
                 LegacyNavButton(when (destination) {
@@ -150,7 +150,7 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
                     DashboardDestination.ENERGY -> "ENERGY"
                     DashboardDestination.ASSISTANT -> "CHAT"
                     DashboardDestination.DEVELOPMENT -> "DEV"
-                    else -> "DRIVE"
+                    else -> "CLUSTER"
                 }, !overview && ui.destination == destination, "nav-${destination.name}", Modifier.weight(1f)) {
                     onDestination(destination)
                 }

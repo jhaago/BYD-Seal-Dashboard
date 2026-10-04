@@ -21,9 +21,10 @@ import androidx.compose.ui.unit.*
 
 @Composable fun ThemeAction(selected: DashboardVisualStyle, onSelect: (DashboardVisualStyle) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    val legacy = LocalDashboardStyle.current == DashboardVisualStyle.LEGACY_HMI
     Box {
         TextButton(onClick = { expanded = true }, modifier = Modifier.heightIn(min = 56.dp).testTag("style-menu")) {
-            Text("Style", fontSize = 16.sp)
+            Text(if (legacy) "SETTINGS" else "Style", fontSize = if (legacy) 12.sp else 16.sp)
         }
         DropdownMenu(expanded, { expanded = false }) {
             DashboardVisualStyle.entries.forEach { style ->
