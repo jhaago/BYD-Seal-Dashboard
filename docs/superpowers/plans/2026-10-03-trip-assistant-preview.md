@@ -55,11 +55,11 @@ Package prefix `P` means `io/github/jhaago/sealdashboard`.
 
 ### Task 3: Parked chat and compact driving preview
 
-**Consumes:** Controller state/actions and theme tokens. **Produces:** `@Composable fun AssistantScreen(state: AssistantState, onSubmit: (String) -> Unit, onCancel: () -> Unit, onApply: (String) -> Unit, onDismiss: (String) -> Unit, drivingPreview: Boolean)` and Assistant navigation/compact entry.
+**Consumes:** Controller state/actions and theme tokens. **Produces:** `AssistantScreen` with submit, stable option-selection, cancel, Apply and Dismiss actions plus a driving-preview mode, Assistant navigation and a compact entry.
 
-- [ ] Add `AssistantPreviewTest`: type sample request, receive labelled station cards, send follow-up, review proposal and Apply; nav returns to updated own-navigation preview. Cancel/error/clarification are visible. Driving-preview uses short responses/large choices and labels speech unavailable; full typing is in parked preview. At 400 dp/font 1.3 and wide companion layout, primary speed/SOC/source/navigation remain reachable without overlap. Existing four destinations continue working after adding Assistant.
-- [ ] Run instrumentation tests; expected missing assistant UI failure. Implement transcript/cards/inputs and a parked-preview toggle owned by display UI, not inferred as reliable from mock speed. Add no production audio/network permission. Wire controller once in AppContainer; no per-screen duplicate service/session.
-- [ ] Run all module tests, Android lint/build, full runtime suite and screenshot review. Update test evidence count expectations to actual executed tests, with zero skips/errors. Commit `feat: introduce offline assistant conversation preview`.
+- [x] Add `AssistantPreviewTest`: type sample request, receive labelled station cards, send follow-up, review proposal and Apply; nav returns to updated own-navigation preview. Cancel/error/clarification are visible. Driving-preview uses short responses/large choices and labels speech unavailable; full typing is in parked preview. At 400 dp/font 1.3 and wide companion layout, primary speed/SOC/source/navigation remain reachable without overlap. Existing four destinations continue working after adding Assistant.
+- [x] Run instrumentation tests; expected missing assistant UI failure. Implement transcript/cards/inputs and a parked-preview toggle owned by display UI, not inferred as reliable from mock speed. Add no production audio/network permission. Wire controller once in AppContainer; no per-screen duplicate service/session.
+- [x] Run all module tests, Android lint/build, full runtime suite and screenshot review. Update test evidence count expectations to actual executed tests, with zero skips/errors. Commit `feat: introduce offline assistant conversation preview`.
 
 ## Evaluation handoff
 
