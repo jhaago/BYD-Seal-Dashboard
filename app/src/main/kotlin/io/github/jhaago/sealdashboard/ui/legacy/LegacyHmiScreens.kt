@@ -68,22 +68,26 @@ import io.github.jhaago.sealdashboard.ui.theme.*
                     Text("${f.text(v.powertrain.driveMode) { it.name }} · ${ui.status.name}", fontSize = 14.sp, color = colors.accent)
                     Text("${f.number(v.environment.outsideTemperatureC)}°C", fontSize = 14.sp, color = colors.muted)
                 }
-                if (wide) Row(Modifier.weight(1f).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    LegacySpeedPanel(ui, Modifier.weight(.8f).fillMaxHeight())
-                    LegacyLaneView(Modifier.weight(1.65f).fillMaxHeight())
-                    LegacyGearPanel(ui, Modifier.weight(.6f).fillMaxHeight())
-                    LegacyPowerFlow(ui, Modifier.weight(.9f).fillMaxHeight())
-                } else Column(Modifier.weight(1f).padding(top = 6.dp).verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(Modifier.fillMaxWidth().height(190.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        LegacySpeedPanel(ui, Modifier.weight(1f).fillMaxHeight())
-                        LegacyGearPanel(ui, Modifier.width(100.dp).fillMaxHeight())
+                if (wide) {
+                    Row(Modifier.weight(1f).padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        LegacySpeedPanel(ui, Modifier.weight(.8f).fillMaxHeight())
+                        LegacyLaneView(Modifier.weight(1.65f).fillMaxHeight())
+                        LegacyGearPanel(ui, Modifier.weight(.6f).fillMaxHeight())
+                        LegacyPowerFlow(ui, Modifier.weight(.9f).fillMaxHeight())
                     }
-                    LegacyPrimaryStrip(ui)
-                    LegacyLaneView(Modifier.fillMaxWidth().height(260.dp))
-                    LegacyPowerFlow(ui, Modifier.fillMaxWidth().height(190.dp), exposePrimaryTags = false)
+                    LegacyPrimaryStrip(ui, Modifier.fillMaxWidth().height(58.dp))
+                } else {
+                    Column(Modifier.weight(1f).padding(top = 6.dp).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(Modifier.fillMaxWidth().height(190.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            LegacySpeedPanel(ui, Modifier.weight(1f).fillMaxHeight())
+                            LegacyGearPanel(ui, Modifier.width(100.dp).fillMaxHeight())
+                        }
+                        LegacyPrimaryStrip(ui)
+                        LegacyLaneView(Modifier.fillMaxWidth().height(260.dp))
+                        LegacyPowerFlow(ui, Modifier.fillMaxWidth().height(190.dp))
+                    }
                 }
-                LegacyPrimaryStrip(ui, Modifier.fillMaxWidth().height(58.dp), showPower = wide)
             }
         }
     }
@@ -252,7 +256,7 @@ import io.github.jhaago.sealdashboard.ui.theme.*
     }
 }
 
-@Composable private fun LegacyPowerFlow(ui: DashboardUiState, modifier: Modifier, exposePrimaryTags: Boolean = true) {
+@Composable private fun LegacyPowerFlow(ui: DashboardUiState, modifier: Modifier) {
     val colors = LocalDashboardPalette.current; val f = ui.formatter; val v = ui.vehicle
     LegacyPanel("POWER FLOW", modifier.testTag("legacy-hmi-power-flow")) {
         Canvas(Modifier.fillMaxWidth().weight(1f)) {
@@ -266,11 +270,6 @@ import io.github.jhaago.sealdashboard.ui.theme.*
         }
         Text("BATTERY ${f.number(v.battery.stateOfChargePercent)}% · REAR MOTOR",
             fontSize = 12.sp, color = colors.muted)
-        if (exposePrimaryTags) {
-            Text(f.number(v.battery.stateOfChargePercent), Modifier.testTag("soc-value"), fontSize = 1.sp)
-            Text(f.number(v.battery.estimatedRangeKm), Modifier.testTag("range-value"), fontSize = 1.sp)
-            Text(f.number(v.powertrain.packPowerKw, 1), Modifier.testTag("power-value"), fontSize = 1.sp)
-        }
     }
 }
 
