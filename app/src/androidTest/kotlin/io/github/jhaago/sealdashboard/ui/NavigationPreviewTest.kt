@@ -22,7 +22,7 @@ class NavigationPreviewTest {
         val host = DashboardTestHost()
         compose.setContent {
             DashboardContent(host.ui, host.simulation, {}, host::command,
-                DisplaySettings(DriveLayout.FULL, visualStyle = DashboardVisualStyle.TRON), {},
+                DisplaySettings(DriveLayout.FULL, visualStyle = DashboardVisualStyle.FUTURISTIC), {},
                 Modifier.requiredSize(1280.dp,720.dp), DashboardDemoState(navigation = NavigationState(route = emptyList())))
         }
         compose.onNodeWithText("Route unavailable").assertIsDisplayed()
@@ -31,7 +31,7 @@ class NavigationPreviewTest {
 
     @Test fun compactLargeTextKeepsUsableMapAndCompleteFooter() {
         val host = DashboardTestHost()
-        host.display = DisplaySettings(DriveLayout.FULL, visualStyle = DashboardVisualStyle.SYSTEMS)
+        host.display = DisplaySettings(DriveLayout.FULL, visualStyle = DashboardVisualStyle.LEGACY_HMI)
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1.3f)) {
                 host.Content(Modifier.requiredSize(400.dp,720.dp))
@@ -47,7 +47,7 @@ class NavigationPreviewTest {
 
     @Test fun switchingPreviewSourceShowsStreetMapTurnAndSampleMarkersWithoutARealSession() {
         val host = DashboardTestHost()
-        host.display = host.display.copy(visualStyle = DashboardVisualStyle.TRON)
+        host.display = host.display.copy(visualStyle = DashboardVisualStyle.FUTURISTIC)
         compose.setContent { host.Content(Modifier.requiredSize(1280.dp,720.dp)) }
         compose.onNodeWithText("ANDROID AUTO · SIMULATED PREVIEW").assertExists()
         compose.onNodeWithTag("navigation-source-toggle").performScrollTo().performClick()

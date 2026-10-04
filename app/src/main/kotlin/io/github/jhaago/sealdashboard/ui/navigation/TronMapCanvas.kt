@@ -18,7 +18,7 @@ import kotlin.math.hypot
 @Composable fun TronMapCanvas(map: DemoStreetMap, route: List<RoutePoint>, modifier: Modifier = Modifier,
     markers: List<MapChargerMarker> = emptyList()) {
     val colors = LocalDashboardPalette.current
-    val neon = LocalDashboardStyle.current == DashboardVisualStyle.TRON
+    val neon = LocalDashboardStyle.current == DashboardVisualStyle.FUTURISTIC
     Canvas(modifier.testTag("street-map").semantics {
         contentDescription = "Fictional streets and building blocks, sample route, vehicle marker and demo chargers. Not geographic navigation."
     }) {

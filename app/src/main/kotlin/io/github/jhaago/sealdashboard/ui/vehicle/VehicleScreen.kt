@@ -16,7 +16,7 @@ import io.github.jhaago.sealdashboard.ui.theme.*
     val v = ui.vehicle; val f = ui.formatter
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         SectionTitle("Vehicle", "Australian 2024 Seal Dynamic · single-motor RWD")
-        if (LocalDashboardStyle.current == DashboardVisualStyle.SYSTEMS) SystemMimic(ui)
+        if (LocalDashboardStyle.current == DashboardVisualStyle.LEGACY_HMI) SystemMimic(ui)
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val tyreInfo: @Composable () -> Unit = {
                 Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {

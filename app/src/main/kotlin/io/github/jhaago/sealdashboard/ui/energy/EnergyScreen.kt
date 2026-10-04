@@ -16,7 +16,7 @@ import io.github.jhaago.sealdashboard.ui.theme.*
     val v = ui.vehicle; val f = ui.formatter
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
         SectionTitle("Energy", "Rear motor and HV pack are separate signals. Positive = discharge; negative = recovery / charging.")
-        if (LocalDashboardStyle.current == DashboardVisualStyle.SYSTEMS) SystemMimic(ui)
+        if (LocalDashboardStyle.current == DashboardVisualStyle.LEGACY_HMI) SystemMimic(ui)
         val metrics = listOf(
             Triple("Rear motor output", f.number(v.powertrain.motorPowerKw[Axle.REAR] ?: Signal.unavailable(), 1), "kW"),
             Triple("HV pack power", f.number(v.powertrain.packPowerKw, 1), "kW"),

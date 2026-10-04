@@ -29,7 +29,7 @@ class DashboardProcessTest {
             assertEquals(CommandResult.Accepted, container.simulation.dispatch(MockCommand.Manual))
             assertEquals(CommandResult.Accepted, container.simulation.dispatch(MockCommand.SetSocPercent(37.0)))
             assertEquals(CommandResult.Accepted, container.simulation.dispatch(MockCommand.SetPaused(true)))
-            DisplayPreferences(context).update(DisplaySettings(DriveLayout.FULL, mirrored = true, visualStyle = DashboardVisualStyle.SYSTEMS))
+            DisplayPreferences(context).update(DisplaySettings(DriveLayout.FULL, mirrored = true, visualStyle = DashboardVisualStyle.LEGACY_HMI))
             // Flush the real preference file before the external process termination.
             assertTrue(context.getSharedPreferences("display", 0).edit().commit())
             assertEquals(37.0, container.vehicle.state.value.battery.stateOfChargePercent.value!!, 0.0)
@@ -40,7 +40,7 @@ class DashboardProcessTest {
     @Test fun freshProcessRestoresOnlyDisplayPreferences() {
         assertTrue("CI must seed the prior process before this test", marker.isFile)
         assertNotEquals("This is a process boundary, not Activity recreation", marker.readText().toInt(), Process.myPid())
-        assertEquals(DisplaySettings(DriveLayout.FULL, mirrored = true, visualStyle = DashboardVisualStyle.SYSTEMS), DisplayPreferences(context).state.value)
+        assertEquals(DisplaySettings(DriveLayout.FULL, mirrored = true, visualStyle = DashboardVisualStyle.LEGACY_HMI), DisplayPreferences(context).state.value)
         assertEquals(80.0, container.vehicle.state.value.battery.stateOfChargePercent.value!!, 0.0)
         assertEquals(0.0, container.vehicle.state.value.motion.speedKmh.value!!, 0.0)
         assertEquals(0.0, container.vehicle.state.value.trip.distanceKm.value!!, 0.0)

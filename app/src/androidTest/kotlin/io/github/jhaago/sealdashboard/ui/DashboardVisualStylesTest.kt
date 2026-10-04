@@ -18,6 +18,28 @@ import org.junit.Test
 class DashboardVisualStylesTest {
     @get:Rule val compose = createComposeRule()
 
+    @Test fun selectingLegacyHmiOpensItsOverviewWithTopNavigation() {
+        val host = DashboardTestHost()
+        compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
+
+        choose(DashboardVisualStyle.LEGACY_HMI)
+
+        compose.onNodeWithTag("legacy-hmi-overview").assertIsDisplayed()
+        compose.onNodeWithTag("legacy-hmi-top-nav").assertIsDisplayed()
+    }
+
+    @Test fun legacyHmiDriveUsesRasterInstrumentCluster() {
+        val host = DashboardTestHost()
+        host.display = host.display.copy(visualStyle = DashboardVisualStyle.LEGACY_HMI)
+        host.ui = host.ui.copy(destination = DashboardDestination.DRIVE)
+        compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
+
+        compose.onNodeWithTag("legacy-hmi-drive").assertIsDisplayed()
+        compose.onNodeWithTag("legacy-hmi-lane-view").assertIsDisplayed()
+        compose.onNodeWithTag("legacy-hmi-power-flow").assertIsDisplayed()
+        compose.onNodeWithTag("speed-value", true).assertTextEquals("0")
+    }
+
     @Test fun selectingStylesPreservesScreenTelemetryAndDisplayChoices() {
         val host = DashboardTestHost()
         host.command(MockCommand.SetSocPercent(63.0))
@@ -38,7 +60,7 @@ class DashboardVisualStylesTest {
             }
         }
         compose.runOnIdle { host.ui = host.ui.copy(status = ProviderStatus.ERROR) }
-        choose(DashboardVisualStyle.SYSTEMS)
+        choose(DashboardVisualStyle.LEGACY_HMI)
         compose.onNodeWithTag("provider-status").assertTextEquals("ERROR")
         compose.onNodeWithTag("source-label").assertTextEquals("SIMULATED")
     }
@@ -65,7 +87,7 @@ class DashboardVisualStylesTest {
 
     @Test fun systemsMimicDoesNotPresentUnknownConversionOrStaleSamplesAsActive() {
         val host = DashboardTestHost()
-        host.display = host.display.copy(visualStyle = DashboardVisualStyle.SYSTEMS)
+        host.display = host.display.copy(visualStyle = DashboardVisualStyle.LEGACY_HMI)
         host.ui = host.ui.copy(destination = DashboardDestination.ENERGY)
         compose.setContent { host.Content(Modifier.requiredSize(1280.dp,720.dp)) }
         compose.onNodeWithTag("systems-pack-quality").performScrollTo().assertTextEquals("FRESH SAMPLE")

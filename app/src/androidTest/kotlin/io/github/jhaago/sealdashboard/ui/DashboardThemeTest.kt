@@ -27,7 +27,7 @@ class DashboardThemeTest {
         compose.setContent {
             Row {
                 DashboardTheme(firstStyle) { first = LocalDashboardPalette.current; Text("First") }
-                DashboardTheme(DashboardVisualStyle.SYSTEMS) {
+                DashboardTheme(DashboardVisualStyle.LEGACY_HMI) {
                     second = LocalDashboardPalette.current
                     secondContent = LocalContentColor.current
                     Text("Systems")
@@ -41,7 +41,7 @@ class DashboardThemeTest {
             assertEquals(second!!.text, secondContent)
             originalSecond = second
             originalFirst = first
-            firstStyle = DashboardVisualStyle.TRON
+            firstStyle = DashboardVisualStyle.FUTURISTIC
         }
         compose.runOnIdle {
             assertNotEquals(originalFirst, first)

@@ -22,17 +22,17 @@ object DashboardColors {
 }
 @Composable fun DashboardTheme(style: DashboardVisualStyle = DashboardVisualStyle.MODERN, content: @Composable () -> Unit) {
     val palette = paletteFor(style)
-    val family = if (style == DashboardVisualStyle.SYSTEMS) FontFamily.Monospace else FontFamily.SansSerif
+    val family = if (style == DashboardVisualStyle.LEGACY_HMI) FontFamily.Monospace else FontFamily.SansSerif
     MaterialTheme(
         colorScheme = darkColorScheme(primary = palette.accent, onPrimary = palette.background,
             background = palette.background, onBackground = palette.text,
             surface = palette.surface, onSurface = palette.text,
             secondary = palette.muted, outline = palette.grid, error = palette.error),
-        shapes = Shapes(extraSmall = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 4.dp),
-            small = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 8.dp),
-            medium = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 12.dp),
-            large = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 16.dp),
-            extraLarge = RoundedCornerShape(if (style == DashboardVisualStyle.SYSTEMS) 0.dp else 24.dp)),
+        shapes = Shapes(extraSmall = RoundedCornerShape(if (style == DashboardVisualStyle.LEGACY_HMI) 0.dp else 4.dp),
+            small = RoundedCornerShape(if (style == DashboardVisualStyle.LEGACY_HMI) 0.dp else 8.dp),
+            medium = RoundedCornerShape(if (style == DashboardVisualStyle.LEGACY_HMI) 0.dp else 12.dp),
+            large = RoundedCornerShape(if (style == DashboardVisualStyle.LEGACY_HMI) 0.dp else 16.dp),
+            extraLarge = RoundedCornerShape(if (style == DashboardVisualStyle.LEGACY_HMI) 0.dp else 24.dp)),
         typography = Typography(bodyLarge = TextStyle(fontFamily = family, fontSize = 18.sp, lineHeight = 24.sp),
             bodyMedium = TextStyle(fontFamily = family, fontSize = 16.sp, lineHeight = 22.sp),
             labelLarge = TextStyle(fontFamily = family, fontSize = 16.sp, lineHeight = 22.sp)),
