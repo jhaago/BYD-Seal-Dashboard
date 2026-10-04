@@ -57,6 +57,13 @@ import io.github.jhaago.sealdashboard.ui.theme.*
 }
 
 @Composable fun LegacyHmiDrive(ui: DashboardUiState) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        if (maxWidth >= 850.dp && maxHeight >= 430.dp) LegacyReferenceDrive(ui)
+        else LegacyHmiDriveCompact(ui)
+    }
+}
+
+@Composable private fun LegacyHmiDriveCompact(ui: DashboardUiState) {
     val colors = LocalDashboardPalette.current
     val f = ui.formatter
     val v = ui.vehicle

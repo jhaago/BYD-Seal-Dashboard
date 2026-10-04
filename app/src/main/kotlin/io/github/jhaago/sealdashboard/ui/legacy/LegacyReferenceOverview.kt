@@ -4,6 +4,7 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.Canvas as AndroidCanvas
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.DropdownMenu
@@ -97,6 +98,86 @@ private fun pixelText(canvas: AndroidCanvas, text: String, x: Float, y: Float, c
             }
         }
     }
+}
+
+@Composable fun LegacyReferenceDrive(ui: DashboardUiState) {
+    val artwork = ImageBitmap.imageResource(R.drawable.legacy_hmi_drive_reference)
+    val f = ui.formatter
+    val vehicle = ui.vehicle
+    val soc = f.number(vehicle.battery.stateOfChargePercent)
+    BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black).testTag("legacy-hmi-drive")) {
+        // The cluster reference is 8:3. Keep its pixels square within a taller infotainment viewport.
+        val clusterHeight = minOf(maxHeight, maxWidth * (576f / REFERENCE_WIDTH))
+        BoxWithConstraints(Modifier.fillMaxWidth().height(clusterHeight).align(androidx.compose.ui.Alignment.Center)) {
+            val sx = maxWidth / REFERENCE_WIDTH
+            val sy = maxHeight / 576f
+            Canvas(Modifier.fillMaxSize().testTag("legacy-hmi-drive-artwork")) {
+                drawImage(artwork, dstSize = IntSize(size.width.toInt(), size.height.toInt()), filterQuality = FilterQuality.None)
+                drawIntoCanvas { imageCanvas ->
+                    val canvas = imageCanvas.nativeCanvas
+                    canvas.save()
+                    canvas.scale(size.width / REFERENCE_WIDTH, size.height / 576f)
+                    val cover = Paint().apply { color = dark }
+                    val ink = Paint().apply { color = cyan; isAntiAlias = false }
+                    fun value(x: Float, y: Float, width: Float, height: Float, text: String, letterHeight: Float,
+                        color: Int = cyan, centered: Boolean = false) {
+                        canvas.drawRect(x, y, x + width, y + height, cover)
+                        ink.color = color
+                        ink.style = Paint.Style.FILL
+                        val cell = minOf(letterHeight / 8.5f, width / (text.length * 6f).coerceAtLeast(6f))
+                        val textX = if (centered) x + (width - text.length * 6f * cell) / 2f else x + 2f
+                        pixelText(canvas, text, textX, y + (height - cell * 7f) / 2f, cell, ink)
+                    }
+                    value(83f, 77f, 266f, 36f, SimpleDateFormat("EEE dd MMM yy", Locale.getDefault()).format(Date()), 27f)
+                    value(388f, 76f, 108f, 37f, SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()), 27f)
+                    value(783f, 71f, 86f, 44f, "—", 35f, green, centered = true)
+                    value(1181f, 74f, 91f, 35f, "${f.number(vehicle.environment.outsideTemperatureC)}°C", 26f)
+                    value(1400f, 76f, 65f, 36f, "—", 29f)
+                    value(109f, 192f, 247f, 148f, f.number(vehicle.motion.speedKmh), 139f, green, centered = true)
+                    value(1052f, 157f, 53f, 66f, f.gear(vehicle.motion.gear), 59f, green)
+                    value(1036f, 282f, 151f, 47f, f.text(vehicle.powertrain.driveMode) { it.name }, 31f, green)
+                    value(1241f, 338f, 75f, 43f, "$soc%", 28f, green)
+                    // Replace the sample battery fill, rather than showing 78% beside another value.
+                    canvas.drawRect(1250f, 212f, 1290f, 325f, cover)
+                    val charge = vehicle.battery.stateOfChargePercent.takeIf { f.quality(it) == SignalQuality.FRESH }?.value
+                    if (charge != null) {
+                        ink.color = green
+                        val fraction = charge.coerceIn(0.0, 100.0).toFloat() / 100f
+                        canvas.drawRect(1253f, 322f - fraction * 103f, 1286f, 322f, ink)
+                    }
+                    value(207f, 455f, 110f, 43f, "${f.number(vehicle.battery.estimatedRangeKm)} km", 33f, green)
+                    canvas.drawRect(334f, 463f, 624f, 489f, cover)
+                    val segments = ((charge ?: 0.0) / 10.0).toInt().coerceIn(0, 10)
+                    repeat(10) { index ->
+                        ink.color = if (index < segments) green else cyan
+                        ink.style = if (index < segments) Paint.Style.FILL else Paint.Style.STROKE
+                        ink.strokeWidth = 2f
+                        val x = 337f + index * 28f
+                        canvas.drawRect(x, 465f, x + 24f, 487f, ink)
+                    }
+                    ink.style = Paint.Style.FILL
+                    value(1062f, 454f, 117f, 43f, "${f.number(vehicle.trip.distanceKm, 1)} km", 32f)
+                    value(1318f, 454f, 137f, 44f, "— km", 31f)
+                    canvas.restore()
+                }
+            }
+            DriveReading("speed-value", f.number(vehicle.motion.speedKmh), 108f, 192f, 248f, 148f, sx, sy)
+            DriveReading("gear-value", f.gear(vehicle.motion.gear), 1050f, 157f, 60f, 66f, sx, sy)
+            DriveReading("soc-value", "$soc%", 1240f, 337f, 80f, 44f, sx, sy)
+            DriveReading("range-value", f.number(vehicle.battery.estimatedRangeKm), 205f, 455f, 112f, 43f, sx, sy)
+            DriveReading("power-value", f.number(vehicle.powertrain.packPowerKw, 1), 1320f, 180f, 100f, 42f, sx, sy)
+            Box(Modifier.offset(x = 430f * sx, y = 141f * sy).size(578f * sx, 289f * sy)
+                .testTag("legacy-hmi-lane-view"))
+            Box(Modifier.offset(x = 1205f * sx, y = 137f * sy).size(272f * sx, 292f * sy)
+                .testTag("legacy-hmi-power-flow"))
+        }
+    }
+}
+
+@Composable private fun DriveReading(tag: String, value: String, x: Float, y: Float, width: Float, height: Float,
+    sx: Dp, sy: Dp) {
+    Text(value, Modifier.offset(x = x * sx, y = y * sy).size(width * sx, height * sy)
+        .testTag(tag), color = Color.Transparent, fontSize = 1.sp)
 }
 
 @Composable fun LegacyReferenceNavigation(
