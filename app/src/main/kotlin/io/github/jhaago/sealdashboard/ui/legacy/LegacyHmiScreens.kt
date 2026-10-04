@@ -23,7 +23,7 @@ import io.github.jhaago.sealdashboard.ui.theme.*
 @Composable fun LegacyHmiOverview(ui: DashboardUiState, demos: DashboardDemoState) {
     BoxWithConstraints(Modifier.fillMaxSize().testTag("legacy-hmi-overview")) {
         val wide = maxWidth >= 900.dp && maxHeight >= 520.dp
-        if (wide) LegacyOverviewWide(ui, demos) else LegacyOverviewCompact(ui, demos)
+        if (wide) LegacyReferenceOverview(ui, demos) else LegacyOverviewCompact(ui, demos)
     }
 }
 

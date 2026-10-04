@@ -23,6 +23,7 @@ import io.github.jhaago.sealdashboard.ui.development.DevelopmentScreen
 import io.github.jhaago.sealdashboard.ui.drive.DriveScreen
 import io.github.jhaago.sealdashboard.ui.energy.EnergyScreen
 import io.github.jhaago.sealdashboard.ui.legacy.LegacyHmiOverview
+import io.github.jhaago.sealdashboard.ui.legacy.LegacyReferenceNavigation
 import io.github.jhaago.sealdashboard.ui.theme.*
 import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
 
@@ -75,8 +76,12 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
         }
         Column(modifier.fillMaxSize().testTag("dashboard-root").background(colors.background).safeDrawingPadding()) {
             if (display.visualStyle == DashboardVisualStyle.LEGACY_HMI) {
-                LegacyTopNavigation(ui, legacyOverview, { legacyOverview = true }, { destination ->
+                if (legacyOverview) LegacyReferenceNavigation(ui, { legacyOverview = true }, { destination ->
                     legacyOverview = false
+                    rejection = null
+                    onDestination(destination)
+                }, display) { onDisplayChange(display.copy(visualStyle = it)) }
+                else LegacyTopNavigation(ui, false, { legacyOverview = true }, { destination ->
                     rejection = null
                     onDestination(destination)
                 }, display) { onDisplayChange(display.copy(visualStyle = it)) }
