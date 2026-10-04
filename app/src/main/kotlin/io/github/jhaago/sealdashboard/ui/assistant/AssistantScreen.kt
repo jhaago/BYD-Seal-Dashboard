@@ -11,7 +11,7 @@ import io.github.jhaago.sealdashboard.assistant.*
 import io.github.jhaago.sealdashboard.ui.theme.*
 
 @Composable fun AssistantScreen(state: AssistantState, onSubmit: (String) -> Unit, onCancel: () -> Unit,
-    onApply: (String) -> Unit, onDismiss: (String) -> Unit, drivingPreview: Boolean,
+    onSelectOption: (ChargerSelection) -> Unit, onApply: (String) -> Unit, onDismiss: (String) -> Unit, drivingPreview: Boolean,
     onDrivingPreviewChange: (Boolean) -> Unit = {}) {
     val colors=LocalDashboardPalette.current
     var input by remember { mutableStateOf("") }
@@ -52,7 +52,8 @@ import io.github.jhaago.sealdashboard.ui.theme.*
             RouteProposalCard(proposal,state.options.find { it.id==proposal.chargerId },onApply,onDismiss)
         }
         state.options.forEachIndexed { index,option ->
-            ChargerOptionCard(option,index) { onSubmit("Add option ${index+1} to my trip") }
+            val selection = state.selectionFor(option.id)
+            ChargerOptionCard(option,index) { onSelectOption(selection) }
         }
     }
     BoxWithConstraints(Modifier.fillMaxSize().padding(16.dp)) {

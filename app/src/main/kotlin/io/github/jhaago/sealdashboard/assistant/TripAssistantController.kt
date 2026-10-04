@@ -6,9 +6,16 @@ import kotlinx.coroutines.flow.*
 
 enum class AssistantPhase { Ready, Responding, ChoiceRequired, ProposalReady, Failed, Cancelled }
 data class AssistantTurn(val fromUser: Boolean, val text: String)
+data class ChargerSelection(val routeId: String, val optionsRevision: Long, val chargerId: String)
 data class AssistantState(val routeId: String = "demo-1", val phase: AssistantPhase = AssistantPhase.Ready,
     val transcript: List<AssistantTurn> = emptyList(), val options: List<ChargerOption> = emptyList(),
-    val rankingReason: String = "", val proposal: RouteProposal? = null, val appliedRouteId: String? = null)
+    val optionsRevision: Long = 0, val rankingReason: String = "", val proposal: RouteProposal? = null,
+    val appliedRouteId: String? = null) {
+    fun selectionFor(chargerId: String): ChargerSelection {
+        require(options.any { it.id == chargerId })
+        return ChargerSelection(routeId, optionsRevision, chargerId)
+    }
+}
 
 /** Serializes proposals and request generations. Never accepts vehicle command dependencies. */
 class TripAssistantController(private val service: AssistantService, private val routes: PreviewRouteActions,
@@ -44,7 +51,7 @@ class TripAssistantController(private val service: AssistantService, private val
                         is AssistantReply.ChargerOptions -> {
                             val current = mutableState.value
                             mutableState.value = current.copy(phase = AssistantPhase.ChoiceRequired,
-                                options = reply.options.toList(), rankingReason = reply.reason,
+                                options = reply.options.toList(), optionsRevision = ticket, rankingReason = reply.reason,
                                 transcript = current.transcript + AssistantTurn(false, reply.reason))
                         }
                         is AssistantReply.RouteProposal -> {
@@ -66,6 +73,25 @@ class TripAssistantController(private val service: AssistantService, private val
                 }
             }
         }
+    }
+
+    fun selectOption(selection: ChargerSelection) = synchronized(lock) {
+        val current = mutableState.value
+        val routeId = routes.currentState.routeId
+        val option = current.options.find { it.id == selection.chargerId }
+        if (selection.routeId != routeId || selection.routeId != current.routeId ||
+            selection.optionsRevision != current.optionsRevision || option == null) {
+            message("The charger options changed. Choose a current sample stop.", AssistantPhase.ChoiceRequired,
+                clearOptions = selection.routeId != routeId, routeId = routeId)
+            return@synchronized
+        }
+        val ticket = ++generation
+        job?.cancel()
+        val proposal = RouteProposal("selection-$ticket", routeId, option.id)
+        mutableState.value = current.copy(phase = AssistantPhase.ProposalReady, proposal = proposal,
+            appliedRouteId = null, transcript = current.transcript +
+                AssistantTurn(true, "Review ${option.name}") +
+                AssistantTurn(false, "Review the sample stop, then Apply or Dismiss."))
     }
 
     fun cancel() = synchronized(lock) {

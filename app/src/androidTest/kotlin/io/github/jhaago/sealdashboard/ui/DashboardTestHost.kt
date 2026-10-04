@@ -34,7 +34,8 @@ class DashboardTestHost(service: AssistantService? = null) {
         val conversation by assistant.state.collectAsState()
         DashboardContent(ui, simulation, { ui = ui.copy(destination = it) }, ::command,
             display, { display = it }, modifier = modifier, demos = DashboardDemoState(navigation = nav), assistantState = conversation,
-            onAssistantSubmit = assistant::submit, onAssistantCancel = assistant::cancel, onAssistantDismiss = assistant::dismissProposal,
+            onAssistantSubmit = assistant::submit, onAssistantCancel = assistant::cancel,
+            onAssistantSelectOption = assistant::selectOption, onAssistantDismiss = assistant::dismissProposal,
             onAssistantApply = { id ->
                 val pending = assistant.state.value.proposal
                 assistant.applyProposal(id)

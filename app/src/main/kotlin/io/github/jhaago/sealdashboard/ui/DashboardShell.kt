@@ -39,6 +39,7 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
     DashboardContent(ui, sim, viewModel::selectDestination, simulation::dispatch, display, preferences::update,
         demos = DashboardDemoState(navigation, media, projection), assistantState = assistant,
         onAssistantSubmit = container.assistant::submit, onAssistantCancel = container.assistant::cancel,
+        onAssistantSelectOption = container.assistant::selectOption,
         onAssistantDismiss = container.assistant::dismissProposal, onAssistantApply = { id ->
             val pending = container.assistant.state.value.proposal
             container.assistant.applyProposal(id)
@@ -56,7 +57,8 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
     display: DisplaySettings, onDisplayChange: (DisplaySettings) -> Unit,
     modifier: Modifier = Modifier, demos: DashboardDemoState = DashboardDemoState(),
     assistantState: AssistantState = AssistantState(), onAssistantSubmit: (String) -> Unit = {},
-    onAssistantCancel: () -> Unit = {}, onAssistantApply: (String) -> Unit = {}, onAssistantDismiss: (String) -> Unit = {}) {
+    onAssistantCancel: () -> Unit = {}, onAssistantSelectOption: (ChargerSelection) -> Unit = {},
+    onAssistantApply: (String) -> Unit = {}, onAssistantDismiss: (String) -> Unit = {}) {
     DashboardTheme(display.visualStyle) {
         val colors = LocalDashboardPalette.current
         var drivingPreview by rememberSaveable { mutableStateOf(false) }
@@ -89,7 +91,7 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
                     DashboardDestination.ENERGY -> EnergyScreen(ui)
                     DashboardDestination.DEVELOPMENT -> DevelopmentScreen(ui, simulation, mockCommand, display, onDisplayChange)
                     DashboardDestination.ASSISTANT -> AssistantScreen(assistantState, onAssistantSubmit, onAssistantCancel,
-                        onAssistantApply, onAssistantDismiss, drivingPreview, { drivingPreview = it })
+                        onAssistantSelectOption, onAssistantApply, onAssistantDismiss, drivingPreview, { drivingPreview = it })
                 }
             }
             rejection?.let { Text(it, Modifier.fillMaxWidth().background(colors.elevated).padding(12.dp).testTag("command-result"),
