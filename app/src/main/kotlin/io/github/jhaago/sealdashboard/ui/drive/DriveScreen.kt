@@ -18,9 +18,14 @@ import io.github.jhaago.sealdashboard.preferences.*
 import io.github.jhaago.sealdashboard.ui.DashboardUiState
 import io.github.jhaago.sealdashboard.ui.theme.*
 import io.github.jhaago.sealdashboard.ui.navigation.*
+import io.github.jhaago.sealdashboard.ui.legacy.LegacyHmiDrive
 
 @Composable fun DriveScreen(ui: DashboardUiState, display: DisplaySettings, onDisplayChange: (DisplaySettings) -> Unit, demos: DashboardDemoState) {
     val colors = LocalDashboardPalette.current
+    if (LocalDashboardStyle.current == DashboardVisualStyle.LEGACY_HMI) {
+        LegacyHmiDrive(ui)
+        return
+    }
     BoxWithConstraints(Modifier.fillMaxSize().padding(16.dp)) {
         val wide = maxWidth >= 1100.dp && maxHeight >= 480.dp && LocalDensity.current.fontScale <= 1.15f
         if (wide) {

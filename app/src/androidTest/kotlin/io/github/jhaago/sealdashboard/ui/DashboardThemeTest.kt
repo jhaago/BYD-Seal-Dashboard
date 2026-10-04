@@ -30,7 +30,7 @@ class DashboardThemeTest {
                 DashboardTheme(DashboardVisualStyle.LEGACY_HMI) {
                     second = LocalDashboardPalette.current
                     secondContent = LocalContentColor.current
-                    Text("Systems")
+                    Text("Legacy HMI")
                 }
             }
         }

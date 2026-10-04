@@ -54,6 +54,8 @@ class AssistantPreviewTest {
         compose.onNodeWithTag("nav-ASSISTANT").performClick()
         for (style in DashboardVisualStyle.entries) for (size in listOf(Triple(400,720,1.3f),Triple(1280,720,1f))) {
             compose.runOnIdle { host.display = host.display.copy(visualStyle = style); dimensions = size }
+            if (style == DashboardVisualStyle.LEGACY_HMI && compose.onAllNodesWithTag("legacy-hmi-overview").fetchSemanticsNodes().isNotEmpty())
+                compose.onNodeWithTag("nav-ASSISTANT").performClick()
             val bounds = listOf("assistant-speed","assistant-gear","assistant-soc","assistant-range","assistant-power").map {
                 compose.onNodeWithTag(it,true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
             }

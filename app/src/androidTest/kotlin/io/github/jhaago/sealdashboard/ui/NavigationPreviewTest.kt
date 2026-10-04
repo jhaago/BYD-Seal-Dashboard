@@ -31,7 +31,7 @@ class NavigationPreviewTest {
 
     @Test fun compactLargeTextKeepsUsableMapAndCompleteFooter() {
         val host = DashboardTestHost()
-        host.display = DisplaySettings(DriveLayout.FULL, visualStyle = DashboardVisualStyle.LEGACY_HMI)
+        host.display = DisplaySettings(DriveLayout.FULL, visualStyle = DashboardVisualStyle.MODERN)
         compose.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1.3f)) {
                 host.Content(Modifier.requiredSize(400.dp,720.dp))

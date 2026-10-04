@@ -42,6 +42,10 @@ class DashboardScreenshotsTest {
                 size = Triple(1280, 720, 1f)
             }
             val prefix = style.name.lowercase()
+            if (style == DashboardVisualStyle.LEGACY_HMI) {
+                capture("$prefix-overview")
+                compose.onNodeWithTag("nav-DRIVE").performClick()
+            }
             capture("$prefix-drive-companion")
             compose.runOnIdle { host.display = host.display.copy(layout = DriveLayout.FULL) }
             capture("$prefix-drive-full")
@@ -68,8 +72,10 @@ class DashboardScreenshotsTest {
             capture("$prefix-drive-portrait-large-text")
             compose.runOnIdle { size = Triple(400, 720, 1.3f) }
             capture("$prefix-drive-compact-large-text")
-            compose.onNodeWithTag("street-map").performScrollTo()
-            capture("$prefix-map-compact-large-text")
+            if (style != DashboardVisualStyle.LEGACY_HMI) {
+                compose.onNodeWithTag("street-map").performScrollTo()
+                capture("$prefix-map-compact-large-text")
+            }
             compose.runOnIdle {
                 host.ui = host.ui.copy(destination = DashboardDestination.ASSISTANT)
                 size = Triple(1280,720,1f)

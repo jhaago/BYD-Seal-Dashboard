@@ -22,6 +22,7 @@ import io.github.jhaago.sealdashboard.preferences.*
 import io.github.jhaago.sealdashboard.ui.development.DevelopmentScreen
 import io.github.jhaago.sealdashboard.ui.drive.DriveScreen
 import io.github.jhaago.sealdashboard.ui.energy.EnergyScreen
+import io.github.jhaago.sealdashboard.ui.legacy.LegacyHmiOverview
 import io.github.jhaago.sealdashboard.ui.theme.*
 import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
 
@@ -62,6 +63,10 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
     DashboardTheme(display.visualStyle) {
         val colors = LocalDashboardPalette.current
         var drivingPreview by rememberSaveable { mutableStateOf(false) }
+        var legacyOverview by rememberSaveable { mutableStateOf(display.visualStyle == DashboardVisualStyle.LEGACY_HMI) }
+        LaunchedEffect(display.visualStyle) {
+            legacyOverview = display.visualStyle == DashboardVisualStyle.LEGACY_HMI
+        }
         var rejection by remember { mutableStateOf<String?>(null) }
         val mockCommand: (MockCommand) -> CommandResult = { command ->
             val result = onCommand(command)
@@ -69,7 +74,13 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
             result
         }
         Column(modifier.fillMaxSize().testTag("dashboard-root").background(colors.background).safeDrawingPadding()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            if (display.visualStyle == DashboardVisualStyle.LEGACY_HMI) {
+                LegacyTopNavigation(ui, legacyOverview, { legacyOverview = true }, { destination ->
+                    legacyOverview = false
+                    rejection = null
+                    onDestination(destination)
+                }, display) { onDisplayChange(display.copy(visualStyle = it)) }
+            } else Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("SEAL", fontSize = 24.sp, letterSpacing = 4.sp, fontWeight = FontWeight.Medium)
@@ -83,21 +94,23 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
                 ThemeAction(display.visualStyle) { onDisplayChange(display.copy(visualStyle = it)) }
             }
             HorizontalDivider(color = colors.grid)
-            if (ui.destination == DashboardDestination.ASSISTANT) AssistantTelemetry(ui)
-            Box(Modifier.weight(1f).fillMaxWidth().testTag("screen-${ui.destination.name}")) {
-                when (ui.destination) {
-                    DashboardDestination.DRIVE -> DriveScreen(ui, display, onDisplayChange, demos)
-                    DashboardDestination.VEHICLE -> VehicleScreen(ui)
-                    DashboardDestination.ENERGY -> EnergyScreen(ui)
-                    DashboardDestination.DEVELOPMENT -> DevelopmentScreen(ui, simulation, mockCommand, display, onDisplayChange)
-                    DashboardDestination.ASSISTANT -> AssistantScreen(assistantState, onAssistantSubmit, onAssistantCancel,
-                        onAssistantSelectOption, onAssistantApply, onAssistantDismiss, drivingPreview, { drivingPreview = it })
+            if (!legacyOverview && ui.destination == DashboardDestination.ASSISTANT) AssistantTelemetry(ui)
+            Box(Modifier.weight(1f).fillMaxWidth().testTag(if (legacyOverview) "screen-OVERVIEW" else "screen-${ui.destination.name}")) {
+                if (legacyOverview) LegacyHmiOverview(ui, demos)
+                else when (ui.destination) {
+                        DashboardDestination.DRIVE -> DriveScreen(ui, display, onDisplayChange, demos)
+                        DashboardDestination.VEHICLE -> VehicleScreen(ui)
+                        DashboardDestination.ENERGY -> EnergyScreen(ui)
+                        DashboardDestination.DEVELOPMENT -> DevelopmentScreen(ui, simulation, mockCommand, display, onDisplayChange)
+                        DashboardDestination.ASSISTANT -> AssistantScreen(assistantState, onAssistantSubmit, onAssistantCancel,
+                            onAssistantSelectOption, onAssistantApply, onAssistantDismiss, drivingPreview, { drivingPreview = it })
                 }
             }
             rejection?.let { Text(it, Modifier.fillMaxWidth().background(colors.elevated).padding(12.dp).testTag("command-result"),
                 color = colors.warning, fontSize = 16.sp) }
-            HorizontalDivider(color = colors.grid)
-            Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (display.visualStyle != DashboardVisualStyle.LEGACY_HMI) {
+                HorizontalDivider(color = colors.grid)
+                Row(Modifier.fillMaxWidth().padding(8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 DashboardDestination.entries.forEach { destination ->
                     val selected = ui.destination == destination
                     TextButton(onClick = { rejection = null; onDestination(destination) },
@@ -116,6 +129,49 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
                     }
                 }
             }
+            }
         }
+    }
+}
+
+@Composable private fun LegacyTopNavigation(ui: DashboardUiState, overview: Boolean, onOverview: () -> Unit,
+    onDestination: (DashboardDestination) -> Unit, display: DisplaySettings,
+    onStyle: (DashboardVisualStyle) -> Unit) {
+    val colors = LocalDashboardPalette.current
+    Column(Modifier.fillMaxWidth().testTag("legacy-hmi-top-nav")) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 54.dp).padding(horizontal = 8.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            LegacyNavButton("DASH", overview, "nav-OVERVIEW", Modifier.weight(1f), onOverview)
+            listOf(DashboardDestination.DRIVE, DashboardDestination.VEHICLE, DashboardDestination.ENERGY,
+                DashboardDestination.ASSISTANT, DashboardDestination.DEVELOPMENT).forEach { destination ->
+                LegacyNavButton(when (destination) {
+                    DashboardDestination.VEHICLE -> "VEHICLE"
+                    DashboardDestination.ENERGY -> "ENERGY"
+                    DashboardDestination.ASSISTANT -> "CHAT"
+                    DashboardDestination.DEVELOPMENT -> "DEV"
+                    else -> "DRIVE"
+                }, !overview && ui.destination == destination, "nav-${destination.name}", Modifier.weight(1f)) {
+                    onDestination(destination)
+                }
+            }
+            ThemeAction(display.visualStyle, onStyle)
+        }
+        Row(Modifier.fillMaxWidth().border(1.dp, colors.grid).padding(horizontal = 10.dp, vertical = 3.dp),
+            horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("SEAL · LEGACY HMI", fontSize = 12.sp, color = colors.muted)
+            Text(ui.sourceLabel, Modifier.testTag("source-label"), fontSize = 12.sp, color = colors.accent)
+            Text(ui.status.name, Modifier.testTag("provider-status"), fontSize = 12.sp,
+                color = if (ui.status == io.github.jhaago.sealdashboard.core.ProviderStatus.RUNNING) colors.accent else colors.warning)
+        }
+    }
+}
+
+@Composable private fun LegacyNavButton(label: String, selected: Boolean, tag: String, modifier: Modifier, onClick: () -> Unit) {
+    val colors = LocalDashboardPalette.current
+    TextButton(onClick = onClick, modifier = modifier.heightIn(min = 48.dp).testTag(tag)
+        .semantics { contentDescription = label }
+        .background(if (selected) colors.accent else colors.background), contentPadding = PaddingValues(horizontal = 2.dp)) {
+        Text(label, fontSize = 12.sp, color = if (selected) colors.background else colors.muted)
     }
 }

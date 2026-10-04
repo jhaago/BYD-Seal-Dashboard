@@ -34,6 +34,7 @@ class DashboardVisualStylesTest {
         host.ui = host.ui.copy(destination = DashboardDestination.DRIVE)
         compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
 
+        compose.onNodeWithTag("nav-DRIVE").performClick()
         compose.onNodeWithTag("legacy-hmi-drive").assertIsDisplayed()
         compose.onNodeWithTag("legacy-hmi-lane-view").assertIsDisplayed()
         compose.onNodeWithTag("legacy-hmi-power-flow").assertIsDisplayed()
@@ -50,7 +51,9 @@ class DashboardVisualStylesTest {
         compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
         for (style in DashboardVisualStyle.entries) {
             choose(style)
-            compose.onNodeWithTag("screen-ENERGY").assertExists()
+            if (style == DashboardVisualStyle.LEGACY_HMI)
+                compose.onNodeWithTag("legacy-hmi-overview").assertExists()
+            else compose.onNodeWithTag("screen-ENERGY").assertExists()
             compose.onNodeWithTag("source-label").assertTextEquals("SIMULATED")
             compose.onNodeWithTag("provider-status").assertTextEquals("PAUSED")
             compose.runOnIdle {
@@ -76,6 +79,8 @@ class DashboardVisualStylesTest {
         for (style in DashboardVisualStyle.entries) for ((w, h, scale) in listOf(Triple(1280,720,1f),Triple(400,720,1.3f),Triple(600,960,1.3f))) {
             compose.runOnIdle { host.display = host.display.copy(visualStyle = style); dimensions = Triple(w,h,scale) }
             compose.onNodeWithTag("style-menu").assertIsDisplayed()
+            if (style == DashboardVisualStyle.LEGACY_HMI && compose.onAllNodesWithTag("legacy-hmi-overview").fetchSemanticsNodes().isNotEmpty())
+                compose.onNodeWithTag("nav-DRIVE").performClick()
             val bounds = listOf("speed-value", "gear-value", "soc-value", "range-value", "power-value").map {
                 compose.onNodeWithTag(it, true).assertIsDisplayed().fetchSemanticsNode().boundsInRoot
             }
@@ -85,11 +90,12 @@ class DashboardVisualStylesTest {
         }
     }
 
-    @Test fun systemsMimicDoesNotPresentUnknownConversionOrStaleSamplesAsActive() {
+    @Test fun legacyHmiMimicDoesNotPresentUnknownConversionOrStaleSamplesAsActive() {
         val host = DashboardTestHost()
         host.display = host.display.copy(visualStyle = DashboardVisualStyle.LEGACY_HMI)
         host.ui = host.ui.copy(destination = DashboardDestination.ENERGY)
         compose.setContent { host.Content(Modifier.requiredSize(1280.dp,720.dp)) }
+        compose.onNodeWithTag("nav-ENERGY").performClick()
         compose.onNodeWithTag("systems-pack-quality").performScrollTo().assertTextEquals("FRESH SAMPLE")
         compose.onNodeWithText("Conversion state unavailable").assertExists()
         compose.runOnIdle { host.now += 3000; host.refresh() }
