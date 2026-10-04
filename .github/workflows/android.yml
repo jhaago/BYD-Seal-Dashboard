@@ -245,7 +245,7 @@ jobs:
           import base64, struct
           from pathlib import Path
           names = [f'{style}-assistant-{mode}.png'
-                   for style in ('modern', 'systems', 'tron')
+                   for style in ('modern', 'legacy_hmi', 'futuristic')
                    for mode in ('parked', 'driving', 'compact-driving')]
           for name in names:
               path = Path('evidence/screenshots') / name
