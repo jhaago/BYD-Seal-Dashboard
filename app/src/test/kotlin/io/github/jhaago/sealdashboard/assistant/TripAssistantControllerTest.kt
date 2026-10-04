@@ -116,4 +116,20 @@ class TripAssistantControllerTest {
         assertEquals(navigation.state.value.routeId, controller.state.value.routeId)
         assertNull(controller.state.value.proposal)
     }
+
+    @Test fun aCardRenderedBeforeOptionsReorderCannotSelectADifferentStation() = runTest {
+        val navigation = DemoNavigationProvider()
+        val controller = TripAssistantController(ScriptedAssistantService(DemoChargerSearchProvider()),
+            PreviewRouteActions(navigation), this)
+        controller.submit("Find a charger on my way"); runCurrent()
+        val rendered = controller.state.value.selectionFor("demo-near-1")
+
+        controller.submit("I need a faster charger"); runCurrent()
+        assertEquals("demo-fast-3", controller.state.value.options.first().id)
+        controller.selectOption(rendered)
+
+        assertNull(controller.state.value.proposal)
+        assertTrue(controller.state.value.transcript.last().text.contains("changed"))
+        assertTrue(navigation.state.value.waypoints.isEmpty())
+    }
 }
