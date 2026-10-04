@@ -28,6 +28,35 @@ class DashboardVisualStylesTest {
         compose.onNodeWithTag("legacy-hmi-top-nav").assertIsDisplayed()
     }
 
+    @Test fun legacyHmiVehicleDiagramPlacesLiveTyrePressuresAtEachWheel() {
+        val host = DashboardTestHost()
+        host.command(MockCommand.SetTyrePressureKpa(Wheel.FRONT_LEFT, 241.0))
+        host.command(MockCommand.SetTyrePressureKpa(Wheel.FRONT_RIGHT, 242.0))
+        host.command(MockCommand.SetTyrePressureKpa(Wheel.REAR_LEFT, 238.0))
+        host.command(MockCommand.SetTyrePressureKpa(Wheel.REAR_RIGHT, 239.0))
+        host.display = host.display.copy(visualStyle = DashboardVisualStyle.LEGACY_HMI)
+        compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
+
+        val car = compose.onNodeWithTag("legacy-hmi-vehicle-schematic").fetchSemanticsNode().boundsInRoot
+        val pressures = mapOf(
+            Wheel.FRONT_LEFT to "241 kPa",
+            Wheel.FRONT_RIGHT to "242 kPa",
+            Wheel.REAR_LEFT to "238 kPa",
+            Wheel.REAR_RIGHT to "239 kPa",
+        ).mapValues { (wheel, expected) ->
+            compose.onNodeWithTag("legacy-tyre-${wheel.name}").assertTextEquals(expected).fetchSemanticsNode().boundsInRoot
+        }
+
+        assertTrue(pressures.getValue(Wheel.FRONT_LEFT).center.x < car.center.x)
+        assertTrue(pressures.getValue(Wheel.REAR_LEFT).center.x < car.center.x)
+        assertTrue(pressures.getValue(Wheel.FRONT_RIGHT).center.x > car.center.x)
+        assertTrue(pressures.getValue(Wheel.REAR_RIGHT).center.x > car.center.x)
+        assertTrue(pressures.getValue(Wheel.REAR_LEFT).center.y > pressures.getValue(Wheel.FRONT_LEFT).center.y)
+        assertTrue(pressures.getValue(Wheel.REAR_RIGHT).center.y > pressures.getValue(Wheel.FRONT_RIGHT).center.y)
+        compose.onNodeWithTag("legacy-hmi-power-legend").assertIsDisplayed()
+        compose.onNodeWithTag("legacy-hmi-battery-segments").assertIsDisplayed()
+    }
+
     @Test fun legacyHmiDriveUsesRasterInstrumentCluster() {
         val host = DashboardTestHost()
         host.display = host.display.copy(visualStyle = DashboardVisualStyle.LEGACY_HMI)
