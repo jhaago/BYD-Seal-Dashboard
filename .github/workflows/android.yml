@@ -244,6 +244,7 @@ jobs:
           python - <<'PYVISUAL'
           import base64, struct
           from pathlib import Path
+          # These prefixes are the persisted public style names used by screenshot fixtures.
           names = [f'{style}-assistant-{mode}.png'
                    for style in ('modern', 'legacy_hmi', 'futuristic')
                    for mode in ('parked', 'driving', 'compact-driving')]
