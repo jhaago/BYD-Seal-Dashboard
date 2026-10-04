@@ -20,8 +20,9 @@ class DashboardViewModelTest {
         provider.dispatch(MockCommand.SetSocPercent(79.0))
         runCurrent()
 
-        assertEquals("79", vm.uiState.value.formatter.number(vm.uiState.value.vehicle.battery.socPercent))
-        assertEquals(SignalQuality.FRESH, vm.uiState.value.formatter.quality(vm.uiState.value.vehicle.battery.socPercent))
+        val soc = vm.uiState.value.vehicle.battery.stateOfChargePercent
+        assertEquals("79", vm.uiState.value.formatter.number(soc))
+        assertEquals(SignalQuality.FRESH, vm.uiState.value.formatter.quality(soc))
         collector.cancel()
     }
 

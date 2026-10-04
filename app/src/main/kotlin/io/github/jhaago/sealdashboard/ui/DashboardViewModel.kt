@@ -13,13 +13,11 @@ class DashboardViewModel(
     scope: CoroutineScope? = null,
 ) : ViewModel() {
     private val selected = MutableStateFlow(DashboardDestination.DRIVE)
-    private val presentationPulse = flow {
-        while (currentCoroutineContext().isActive) { emit(Unit); delay(100) }
+    private val presentationTime = flow {
+        while (currentCoroutineContext().isActive) { emit(clock.nowMillis()); delay(100) }
     }
-    private val base = combine(provider.state, provider.status, provider.history, selected, presentationPulse) {
-        vehicle, status, history, destination, _ ->
-        // Sample after receiving telemetry so a snapshot cannot appear to come from the future.
-        DashboardUiState(vehicle, status, clock.nowMillis(), destination, history)
+    private val base = combine(provider.state, provider.status, provider.history, selected, presentationTime) {
+        vehicle, status, history, destination, now -> DashboardUiState(vehicle, status, now, destination, history)
     }
     val uiState = combine(base, provider.diagnostics, provider.capabilities) { ui, diagnostics, capabilities ->
         ui.copy(diagnostics = diagnostics, capabilities = capabilities)
