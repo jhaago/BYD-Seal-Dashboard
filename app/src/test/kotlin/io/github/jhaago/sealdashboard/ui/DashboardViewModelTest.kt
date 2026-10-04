@@ -10,6 +10,21 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DashboardViewModelTest {
+    @Test fun telemetryArrivingBetweenPresentationTicksRemainsFresh() = runTest {
+        val clock = MonotonicClock { testScheduler.currentTime }
+        val provider = MockVehicleDataProvider(SimulationEngine(SimulationConfig(), clock), backgroundScope, clock)
+        val vm = DashboardViewModel(provider, clock, backgroundScope)
+        val collector = backgroundScope.launch { vm.uiState.collect {} }; runCurrent()
+
+        advanceTimeBy(50)
+        provider.dispatch(MockCommand.SetSocPercent(79.0))
+        runCurrent()
+
+        assertEquals("79", vm.uiState.value.formatter.number(vm.uiState.value.vehicle.battery.socPercent))
+        assertEquals(SignalQuality.FRESH, vm.uiState.value.formatter.quality(vm.uiState.value.vehicle.battery.socPercent))
+        collector.cancel()
+    }
+
     @Test fun presentationAgesSilentSamplesAndKeepsNavigationIndependent() = runTest {
         val clock = MonotonicClock { testScheduler.currentTime }
         val provider = MockVehicleDataProvider(SimulationEngine(SimulationConfig(), clock), backgroundScope, clock)
