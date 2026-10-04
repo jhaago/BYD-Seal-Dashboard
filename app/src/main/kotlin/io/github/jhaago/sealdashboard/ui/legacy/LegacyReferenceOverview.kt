@@ -2,6 +2,7 @@ package io.github.jhaago.sealdashboard.ui.legacy
 
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.graphics.Canvas as AndroidCanvas
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,6 +28,9 @@ import io.github.jhaago.sealdashboard.preferences.DisplaySettings
 import io.github.jhaago.sealdashboard.ui.DashboardDestination
 import io.github.jhaago.sealdashboard.ui.DashboardUiState
 import io.github.jhaago.sealdashboard.ui.theme.DashboardVisualStyle
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /** The user's 1536×864 reference is the actual pixel artwork, not a smooth vector recreation. */
 private const val REFERENCE_WIDTH = 1536f
@@ -35,6 +39,65 @@ private const val BODY_HEIGHT = 787f
 private val cyan = android.graphics.Color.rgb(67, 185, 242)
 private val green = android.graphics.Color.rgb(9, 246, 46)
 private val dark = android.graphics.Color.rgb(23, 6, 9)
+
+/** Five-by-seven cell glyphs keep changing numbers as coarse as the supplied display. */
+private val glyphs = mapOf(
+    '0' to "01110/10001/10011/10101/11001/10001/01110",
+    '1' to "00100/01100/00100/00100/00100/00100/01110",
+    '2' to "01110/10001/00001/00010/00100/01000/11111",
+    '3' to "11110/00001/00001/01110/00001/00001/11110",
+    '4' to "00010/00110/01010/10010/11111/00010/00010",
+    '5' to "11111/10000/10000/11110/00001/00001/11110",
+    '6' to "01110/10000/10000/11110/10001/10001/01110",
+    '7' to "11111/00001/00010/00100/01000/01000/01000",
+    '8' to "01110/10001/10001/01110/10001/10001/01110",
+    '9' to "01110/10001/10001/01111/00001/00001/01110",
+    'A' to "01110/10001/10001/11111/10001/10001/10001",
+    'B' to "11110/10001/10001/11110/10001/10001/11110",
+    'C' to "01111/10000/10000/10000/10000/10000/01111",
+    'D' to "11110/10001/10001/10001/10001/10001/11110",
+    'E' to "11111/10000/10000/11110/10000/10000/11111",
+    'F' to "11111/10000/10000/11110/10000/10000/10000",
+    'G' to "01111/10000/10000/10111/10001/10001/01111",
+    'H' to "10001/10001/10001/11111/10001/10001/10001",
+    'I' to "01110/00100/00100/00100/00100/00100/01110",
+    'J' to "00111/00010/00010/00010/10010/10010/01100",
+    'K' to "10001/10010/10100/11000/10100/10010/10001",
+    'L' to "10000/10000/10000/10000/10000/10000/11111",
+    'M' to "10001/11011/10101/10101/10001/10001/10001",
+    'N' to "10001/11001/10101/10011/10001/10001/10001",
+    'O' to "01110/10001/10001/10001/10001/10001/01110",
+    'P' to "11110/10001/10001/11110/10000/10000/10000",
+    'R' to "11110/10001/10001/11110/10100/10010/10001",
+    'S' to "01111/10000/10000/01110/00001/00001/11110",
+    'T' to "11111/00100/00100/00100/00100/00100/00100",
+    'U' to "10001/10001/10001/10001/10001/10001/01110",
+    'V' to "10001/10001/10001/10001/10001/01010/00100",
+    'W' to "10001/10001/10001/10101/10101/10101/01010",
+    'Y' to "10001/10001/01010/00100/00100/00100/00100",
+    '/' to "00001/00001/00010/00100/01000/10000/10000",
+    '%' to "11001/11010/00100/00100/01011/10011/00000",
+    '.' to "00000/00000/00000/00000/00000/01100/01100",
+    ':' to "00000/01100/01100/00000/01100/01100/00000",
+    '-' to "00000/00000/00000/11111/00000/00000/00000",
+    '°' to "01100/10010/01100/00000/00000/00000/00000",
+    ' ' to "00000/00000/00000/00000/00000/00000/00000",
+)
+
+private fun pixelText(canvas: AndroidCanvas, text: String, x: Float, y: Float, cell: Float, paint: Paint) {
+    text.uppercase().forEachIndexed { index, character ->
+        val rows = glyphs[if (character == '—' || character == '−') '-' else character]?.split('/') ?: glyphs.getValue(' ' ).split('/')
+        rows.forEachIndexed { row, bits ->
+            bits.forEachIndexed { col, bit ->
+                if (bit == '1') {
+                    val left = x + (index * 6 + col) * cell
+                    val top = y + row * cell
+                    canvas.drawRect(left, top, left + cell * .88f, top + cell * .88f, paint)
+                }
+            }
+        }
+    }
+}
 
 @Composable fun LegacyReferenceNavigation(
     ui: DashboardUiState,
@@ -49,6 +112,17 @@ private val dark = android.graphics.Color.rgb(23, 6, 9)
         val sx = maxWidth / REFERENCE_WIDTH
         Canvas(Modifier.fillMaxSize()) {
             drawImage(artwork, srcSize = IntSize(1536, 77), dstSize = IntSize(size.width.toInt(), size.height.toInt()), filterQuality = FilterQuality.None)
+            drawIntoCanvas { imageCanvas ->
+                val canvas = imageCanvas.nativeCanvas
+                canvas.save()
+                canvas.scale(size.width / REFERENCE_WIDTH, size.height / 77f)
+                val mask = Paint().apply { color = dark }
+                canvas.drawRect(1405f, 25f, 1517f, 65f, mask)
+                val ink = Paint().apply { color = cyan; isAntiAlias = false }
+                pixelText(canvas, ui.sourceLabel, 1278f, 39f, 2f, ink)
+                pixelText(canvas, SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date()), 1424f, 33f, 3f, ink)
+                canvas.restore()
+            }
         }
         ReferenceTouch("nav-OVERVIEW", "Drive overview", 75f, 26f, 148f, 42f, sx, 1.dp, onOverview)
         ReferenceTouch("nav-DRIVE", "Driving cluster", 231f, 25f, 132f, 44f, sx, 1.dp) { onDestination(DashboardDestination.DRIVE) }
@@ -85,7 +159,7 @@ private val dark = android.graphics.Color.rgb(23, 6, 9)
     val pressures = Wheel.entries.associateWith { wheel ->
         f.number(v.wheels[wheel]?.pressureKpa ?: Signal.unavailable())
     }
-    BoxWithConstraints(Modifier.fillMaxSize().testTag("legacy-hmi-overview")) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         val sx = maxWidth / REFERENCE_WIDTH
         val sy = maxHeight / BODY_HEIGHT
         Canvas(Modifier.fillMaxSize()) {
@@ -102,13 +176,23 @@ private val dark = android.graphics.Color.rgb(23, 6, 9)
                     ink: Int = cyan) {
                     canvas.drawRect(x, y, x + width, y + height, cover)
                     type.color = ink
-                    type.textSize = size
-                    canvas.drawText(text, x + 2f, y + height - (height - size) / 2f - 4f, type)
+                    pixelText(canvas, text, x + 2f, y + (height - size * 7f / 8.5f) / 2f,
+                        minOf(size / 8.5f, width / (text.length * 6f).coerceAtLeast(6f)), type)
                 }
                 // Cover the example readings in the image. A disconnected/stale source prints dashes.
-                value(111f, 129f, 180f, 81f, "${demos.navigation.distanceKm} km", 37f)
-                value(112f, 171f, 176f, 40f, demos.navigation.nextTurn.uppercase().take(17), 15f)
+                value(111f, 129f, 180f, 41f, "${demos.navigation.distanceKm} km", 37f)
+                value(112f, 171f, 176f, 39f, demos.navigation.nextTurn.uppercase().take(17), 15f)
                 value(310f, 132f, 131f, 45f, "${demos.navigation.minutes} MIN", 17f)
+                value(310f, 191f, 133f, 47f, "ROUTE PREVIEW", 14f)
+                value(310f, 250f, 133f, 46f, "SIMULATED", 15f)
+                if (demos.navigation.nextTurn.contains("right", ignoreCase = true)) {
+                    canvas.drawRect(30f, 126f, 98f, 218f, cover)
+                    val arrow = Paint().apply { color = green }
+                    canvas.drawRect(46f, 156f, 59f, 211f, arrow)
+                    canvas.drawRect(46f, 153f, 84f, 165f, arrow)
+                    canvas.drawRect(75f, 139f, 87f, 178f, arrow)
+                    canvas.drawRect(85f, 150f, 96f, 167f, arrow)
+                }
                 value(689f, 151f, 125f, 31f, "${f.number(v.powertrain.motorPowerKw[Axle.FRONT] ?: Signal.unavailable())} kW", 22f)
                 value(860f, 517f, 129f, 31f, "${f.number(v.powertrain.motorPowerKw[Axle.REAR] ?: Signal.unavailable())} kW", 22f)
                 value(677f, 364f, 58f, 28f, "$soc%", 23f)
