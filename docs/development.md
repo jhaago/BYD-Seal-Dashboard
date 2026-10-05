@@ -38,3 +38,11 @@ The documented reset baseline is 80% SOC, 0 km/h, Park, Normal mode, four 250 kP
 Physics integrates in steps no larger than 50 ms; explicit outer steps must be finite and within 0–60 seconds. The app provider will use 100 ms updates and must never feed background elapsed time into the model. Power and SOC histories sample at 1 Hz, bounded to 60 and 900 points respectively. History's shared read-only value type belongs to core so a later real provider can supply graph data without exposing mock commands.
 
 Plug-in charging forces a stopped/Park simulation and never counts as trip regeneration. Current/power are signed positive discharge, negative stored charging/recovery. The engine is pure Kotlin, has an injected monotonic clock and contains no Android APIs or real vehicle commands. Runtime provider wiring and dashboard screens are still separate remaining tasks.
+
+## Next work session: real vehicle data + factory camera probe
+
+The next integration milestone is no longer just generic telemetry research. Build a diagnostic-only BYD probe that tests the actual Australian Seal for real vehicle signals and factory camera access before wiring either into the production dashboard.
+
+Use `docs/superpowers/specs/2026-10-05-vehicle-data-camera-probe-design.md` and `docs/superpowers/plans/2026-10-05-vehicle-data-camera-probe.md` as the handoff. The work should probe speed, gear, SOC/range, HV electrical data, tyres, drive/charging/body/climate signals and Android-origin sensors, while separately discovering Camera2 and BYD/DiLink panoramic camera paths. Existing DiLink projects make factory camera access a credible planned capability, including front/rear/left/right/all-camera and sentry-style use, but nothing is considered confirmed on this exact car until an exported in-car diagnostic report proves it.
+
+Keep this milestone read-only. Do not silently replace blocked real values with mock data, do not add vehicle commands, and do not implement sentry/remote camera/automatic camera overlays until basic telemetry and camera acquisition are verified and the factory reverse/AVM camera is shown to coexist safely.
