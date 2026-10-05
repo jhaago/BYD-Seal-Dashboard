@@ -193,10 +193,10 @@ private const val DARK = 0xff100408.toInt()
                             locations.forEach { (wheel,x,y) ->
                                 val reading = model.tyres.getValue(wheel)
                                 box(x,y,326f,270f,true)
-                                text(wheel.name.replace('_',' '),x+24f,y+30f,5f)
+                                text(wheel.name.replace('_',' '),x+24f,y+30f,4f)
                                 line(x+12f,y+78f,x+310f,y+78f,true)
-                                text(reading.pressure,x+28f,y+105f,13f,true)
-                                text("KPA",x+235f,y+190f,4f,true)
+                                text(reading.pressure,x+28f,y+105f,11f,true)
+                                text("KPA",x+228f,y+150f,4f,true)
                                 line(x+12f,y+213f,x+310f,y+213f,true)
                                 text("${reading.temperature}°C",x+110f,y+225f,5f,true)
                             }
@@ -214,7 +214,6 @@ private const val DARK = 0xff100408.toInt()
                             text("MODE ${model.mode}",875f,945f,6f,true)
                         }
                     }
-                    text("SIMULATED  /  ${ui.status.name}",40f,1118f,3.5f)
                     c.restore()
                 }
             }
