@@ -202,7 +202,7 @@ private const val DARK = 0xff100408.toInt()
                             }
                             line(55f,1050f,1480f,1050f)
                             box(432f,1068f,680f,64f,true)
-                            text(if (model.tyreDataComplete) "TYRE DATA AVAILABLE" else "TYRE DATA UNAVAILABLE",475f,1085f,6f,true)
+                            text(if (model.tyreDataComplete) "TYRE DATA AVAILABLE" else "TYRE DATA UNAVAILABLE",475f,1085f,5f,true)
                         }
                         LegacyPixelPage.PROFILE -> {
                             text("BYD SEAL / VEHICLE PROFILE",60f,65f,9f)
