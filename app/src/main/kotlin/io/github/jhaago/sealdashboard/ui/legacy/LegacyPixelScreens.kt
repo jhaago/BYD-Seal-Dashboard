@@ -49,6 +49,7 @@ private const val DARK = 0xff100408.toInt()
         LegacyTab("TYRES", page == LegacyPixelPage.TYRES, "legacy-page-TYRES", Modifier.weight(1f)) { onPage(LegacyPixelPage.TYRES) }
         LegacyTab("PROFILE", page == LegacyPixelPage.PROFILE, "legacy-page-PROFILE", Modifier.weight(1f)) { onPage(LegacyPixelPage.PROFILE) }
         LegacyTab("CLUSTER", false, "nav-DRIVE", Modifier.weight(1f)) { onDestination(DashboardDestination.DRIVE) }
+        LegacyTab("ENERGY", false, "nav-ENERGY", Modifier.weight(1f)) { onDestination(DashboardDestination.ENERGY) }
         LegacyTab("CHAT", false, "nav-ASSISTANT", Modifier.weight(.8f)) { onDestination(DashboardDestination.ASSISTANT) }
         Box(Modifier.weight(.8f)) {
             LegacyTab("SET", false, "style-menu", Modifier.fillMaxWidth()) { menu = true }
@@ -57,6 +58,9 @@ private const val DARK = 0xff100408.toInt()
                     DropdownMenuItem(text = { Text(style.label) }, onClick = { onStyle(style); menu = false },
                         modifier = Modifier.testTag("select-style-${style.name}"))
                 }
+                DropdownMenuItem(text = { Text("Chat") }, onClick = {
+                    onDestination(DashboardDestination.ASSISTANT); menu = false
+                })
                 DropdownMenuItem(text = { Text("Development") }, onClick = {
                     onDestination(DashboardDestination.DEVELOPMENT); menu = false
                 })
@@ -118,8 +122,8 @@ private const val DARK = 0xff100408.toInt()
                     fun panel(label: String, value: String, unit: String, x: Float, y: Float, width: Float = 410f, height: Float = 270f) {
                         box(x,y,width,height)
                         text(label,x+28,y+30,6f)
-                        text(value,x+48,y+100,17f,true)
-                        text(unit,x+width-115,y+175,5f)
+                        text(value,x+45,y+99,if (value.length > 2) 14f else 17f,true)
+                        text(unit,x+width-105,y+height-66,5f)
                     }
                     fun gauge(x: Float,y: Float, fraction: Float?) {
                         repeat(10) { i ->
@@ -131,6 +135,22 @@ private const val DARK = 0xff100408.toInt()
                         }
                     }
                     val socFraction = model.soc.toFloatOrNull()?.div(100f)?.coerceIn(0f,1f)
+                    if (page == LegacyPixelPage.POWER || page == LegacyPixelPage.CHARGE) {
+                        // A separate live circuit layer leaves the supplied body outline untouched.
+                        box(724f,325f,90f,94f)
+                        box(675f,525f,190f,245f)
+                        box(724f,845f,90f,94f)
+                        line(769f,420f,769f,525f,model.discharging || model.charging)
+                        line(769f,770f,769f,845f,model.discharging || model.charging)
+                        line(650f,373f,724f,373f,model.discharging)
+                        line(814f,373f,885f,373f,model.discharging)
+                        line(650f,891f,724f,891f,model.discharging)
+                        line(814f,891f,885f,891f,model.discharging)
+                        repeat(6) { i ->
+                            val on = socFraction != null && i < (socFraction * 6).toInt()
+                            box(700f,550f+i*32f,140f,27f,on)
+                        }
+                    }
                     when(page) {
                         LegacyPixelPage.POWER -> {
                             text("BATTERY / POWER FLOW",40f,38f,9f)
@@ -149,7 +169,6 @@ private const val DARK = 0xff100408.toInt()
                             text("BATTERY PACK",1120f,870f,5f)
                             text("FRONT MOTOR  —",1120f,930f,4f)
                             text("REAR MOTOR",1120f,990f,5f)
-                            text(if (model.charging) "CHARGING" else if (model.discharging) "OUTPUT" else "FLOW —",665f,742f,5f,true)
                         }
                         LegacyPixelPage.CHARGE -> {
                             box(22f,60f,1492f,1050f)

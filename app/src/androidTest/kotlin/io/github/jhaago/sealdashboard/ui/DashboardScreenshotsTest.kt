@@ -44,6 +44,12 @@ class DashboardScreenshotsTest {
             val prefix = style.name.lowercase()
             if (style == DashboardVisualStyle.LEGACY_HMI) {
                 capture("$prefix-overview")
+                compose.onNodeWithTag("legacy-page-CHARGE").performClick()
+                capture("$prefix-charge")
+                compose.onNodeWithTag("legacy-page-TYRES").performClick()
+                capture("$prefix-tyres")
+                compose.onNodeWithTag("legacy-page-PROFILE").performClick()
+                capture("$prefix-profile")
                 compose.onNodeWithTag("nav-DRIVE").performClick()
             }
             capture("$prefix-drive-companion")
