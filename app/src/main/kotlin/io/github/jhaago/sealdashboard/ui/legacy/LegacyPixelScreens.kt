@@ -84,7 +84,7 @@ private const val DARK = 0xff100408.toInt()
     BoxWithConstraints(Modifier.fillMaxSize().background(Color(DARK)).testTag("legacy-hmi-overview")) {
         val width = minOf(maxWidth, maxHeight * (W / H))
         val height = width * (H / W)
-        BoxWithConstraints(Modifier.width(width).height(height).align(Alignment.Center)
+        Box(Modifier.width(width).height(height).align(Alignment.Center)
             .testTag("legacy-canvas-${page.name}")) {
             Canvas(Modifier.fillMaxSize()) {
                 val sx = size.width / W
