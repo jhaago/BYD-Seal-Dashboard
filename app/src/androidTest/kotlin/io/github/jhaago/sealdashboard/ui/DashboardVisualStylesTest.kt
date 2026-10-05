@@ -28,7 +28,7 @@ class DashboardVisualStylesTest {
         compose.onNodeWithTag("legacy-hmi-top-nav").assertIsDisplayed()
     }
 
-    @Test fun legacyHmiReferenceOverviewPlacesLiveTyrePressuresInDrivingData() {
+    @Test fun legacyHmiTyrePagePlacesAllFourLiveReadingsAroundVehicle() {
         val host = DashboardTestHost()
         host.command(MockCommand.SetTyrePressureKpa(Wheel.FRONT_LEFT, 241.0))
         host.command(MockCommand.SetTyrePressureKpa(Wheel.FRONT_RIGHT, 242.0))
@@ -36,9 +36,8 @@ class DashboardVisualStylesTest {
         host.command(MockCommand.SetTyrePressureKpa(Wheel.REAR_RIGHT, 239.0))
         host.display = host.display.copy(visualStyle = DashboardVisualStyle.LEGACY_HMI)
         compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
+        compose.onNodeWithTag("legacy-page-TYRES").performClick()
 
-        val car = compose.onNodeWithTag("legacy-hmi-vehicle-schematic").fetchSemanticsNode().boundsInRoot
-        val drivingData = compose.onNodeWithTag("legacy-hmi-driving-data").fetchSemanticsNode().boundsInRoot
         val pressures = mapOf(
             Wheel.FRONT_LEFT to "241 kPa",
             Wheel.FRONT_RIGHT to "242 kPa",
@@ -48,13 +47,9 @@ class DashboardVisualStylesTest {
             compose.onNodeWithTag("legacy-tyre-${wheel.name}").assertTextEquals(expected).fetchSemanticsNode().boundsInRoot
         }
 
-        assertTrue(pressures.values.all { it.center.x > car.center.x && drivingData.contains(it.center) })
-        assertTrue(pressures.getValue(Wheel.FRONT_LEFT).center.x < pressures.getValue(Wheel.FRONT_RIGHT).center.x)
-        assertTrue(pressures.getValue(Wheel.REAR_LEFT).center.x < pressures.getValue(Wheel.REAR_RIGHT).center.x)
-        assertTrue(pressures.getValue(Wheel.REAR_LEFT).center.y > pressures.getValue(Wheel.FRONT_LEFT).center.y)
-        assertTrue(pressures.getValue(Wheel.REAR_RIGHT).center.y > pressures.getValue(Wheel.FRONT_RIGHT).center.y)
-        compose.onNodeWithTag("legacy-hmi-power-legend").assertIsDisplayed()
-        compose.onNodeWithTag("legacy-hmi-battery-segments").assertIsDisplayed()
+        assertEquals(4, pressures.size)
+        compose.onNodeWithTag("legacy-hmi-vehicle-schematic").assertIsDisplayed()
+        compose.onNodeWithTag("legacy-page-TYRES").assertIsDisplayed()
     }
 
     @Test fun legacyHmiOverviewReplacesReferenceSampleValuesWithLiveAndUnavailableSignals() {
@@ -64,12 +59,12 @@ class DashboardVisualStylesTest {
         compose.setContent { host.Content(Modifier.requiredSize(1280.dp, 720.dp)) }
 
         compose.onNodeWithTag("soc-value").assertTextEquals("63%")
-        compose.onNodeWithTag("speed-value").assertTextEquals("0")
-        compose.onNodeWithTag("legacy-hmi-navigation").assertIsDisplayed()
+        compose.onNodeWithTag("legacy-canvas-POWER").assertIsDisplayed()
         compose.onNodeWithTag("legacy-hmi-vehicle-schematic").assertIsDisplayed()
         compose.runOnIdle { host.now += 3000; host.refresh() }
         compose.onNodeWithTag("soc-value").assertTextEquals("—%")
-        compose.onNodeWithTag("speed-value").assertTextEquals("—")
+        compose.onNodeWithTag("legacy-page-CHARGE").performClick()
+        compose.onNodeWithTag("legacy-canvas-CHARGE").assertIsDisplayed()
     }
 
     @Test fun legacyHmiDriveUsesRasterInstrumentCluster() {

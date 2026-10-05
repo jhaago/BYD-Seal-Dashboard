@@ -85,7 +85,7 @@ private val glyphs = mapOf(
     ' ' to "00000/00000/00000/00000/00000/00000/00000",
 )
 
-private fun pixelText(canvas: AndroidCanvas, text: String, x: Float, y: Float, cell: Float, paint: Paint) {
+internal fun pixelText(canvas: AndroidCanvas, text: String, x: Float, y: Float, cell: Float, paint: Paint) {
     text.uppercase().forEachIndexed { index, character ->
         val rows = glyphs[if (character == '—' || character == '−') '-' else character]?.split('/') ?: glyphs.getValue(' ' ).split('/')
         rows.forEachIndexed { row, bits ->

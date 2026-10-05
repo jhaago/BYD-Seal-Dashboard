@@ -24,6 +24,9 @@ import io.github.jhaago.sealdashboard.ui.drive.DriveScreen
 import io.github.jhaago.sealdashboard.ui.energy.EnergyScreen
 import io.github.jhaago.sealdashboard.ui.legacy.LegacyHmiOverview
 import io.github.jhaago.sealdashboard.ui.legacy.LegacyReferenceNavigation
+import io.github.jhaago.sealdashboard.ui.legacy.LegacyPixelNavigation
+import io.github.jhaago.sealdashboard.ui.legacy.LegacyPixelPage
+import io.github.jhaago.sealdashboard.ui.legacy.LegacyPixelScreen
 import io.github.jhaago.sealdashboard.ui.theme.*
 import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
 
@@ -65,8 +68,10 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
         val colors = LocalDashboardPalette.current
         var drivingPreview by rememberSaveable { mutableStateOf(false) }
         var legacyOverview by rememberSaveable { mutableStateOf(display.visualStyle == DashboardVisualStyle.LEGACY_HMI) }
+        var legacyPage by rememberSaveable { mutableStateOf(LegacyPixelPage.POWER) }
         LaunchedEffect(display.visualStyle) {
             legacyOverview = display.visualStyle == DashboardVisualStyle.LEGACY_HMI
+            if (legacyOverview) legacyPage = LegacyPixelPage.POWER
         }
         var rejection by remember { mutableStateOf<String?>(null) }
         val mockCommand: (MockCommand) -> CommandResult = { command ->
@@ -76,11 +81,11 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
         }
         Column(modifier.fillMaxSize().testTag("dashboard-root").background(colors.background).safeDrawingPadding()) {
             if (display.visualStyle == DashboardVisualStyle.LEGACY_HMI) {
-                if (legacyOverview) LegacyReferenceNavigation(ui, { legacyOverview = true }, { destination ->
+                if (legacyOverview) LegacyPixelNavigation(legacyPage, ui, { legacyPage = it }, { destination ->
                     legacyOverview = false
                     rejection = null
                     onDestination(destination)
-                }, display) { onDisplayChange(display.copy(visualStyle = it)) }
+                }) { onDisplayChange(display.copy(visualStyle = it)) }
                 else LegacyTopNavigation(ui, false, { legacyOverview = true }, { destination ->
                     rejection = null
                     onDestination(destination)
@@ -101,7 +106,7 @@ import io.github.jhaago.sealdashboard.ui.vehicle.VehicleScreen
             HorizontalDivider(color = colors.grid)
             if (!legacyOverview && ui.destination == DashboardDestination.ASSISTANT) AssistantTelemetry(ui)
             Box(Modifier.weight(1f).fillMaxWidth().testTag(if (legacyOverview) "screen-OVERVIEW" else "screen-${ui.destination.name}")) {
-                if (legacyOverview) LegacyHmiOverview(ui, demos)
+                if (legacyOverview) LegacyPixelScreen(ui, legacyPage)
                 else when (ui.destination) {
                         DashboardDestination.DRIVE -> DriveScreen(ui, display, onDisplayChange, demos)
                         DashboardDestination.VEHICLE -> VehicleScreen(ui)
